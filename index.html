@@ -414,7 +414,15 @@
   .mobile-app .btn { min-height: 44px; }
   .mobile-app .list-toolbar { align-items: stretch; }
   .mobile-app .list-toolbar input { flex-basis: 100%; }
-  .mobile-app .sentence-item { padding: 14px 12px; }
+  .mobile-app .sentence-item {
+    padding: 14px 12px; flex-direction: column; align-items: stretch; gap: 10px;
+  }
+  .mobile-app .sent-body { width: 100%; }
+  .mobile-app .sent-actions {
+    width: 100%; padding-top: 10px; border-top: 1px solid var(--line);
+    justify-content: stretch; flex-wrap: wrap;
+  }
+  .mobile-app .sent-actions .btn { flex: 1 1 0; min-width: 0; padding: 9px 8px; }
   .mobile-app .stat-chart, .mobile-app .stat-chart.full {
     position: fixed; z-index: 120; top: calc(68px + env(safe-area-inset-top)); left: 10px; right: 10px;
     width: auto; max-height: calc(100dvh - 150px - env(safe-area-inset-bottom)); overflow-y: auto;

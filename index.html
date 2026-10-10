@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#eef0f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="英语学习助手">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>英语学习助手 · 手机版</title>
+<style>
+  :root {
+    --bg: #eef0f6;
+    --card: rgba(255,255,255,.62);
+    --primary: #1f7fe8;      /* 标志：鲸鱼蓝 */
+    --primary-2: #24bfd7;    /* 标志：青绿 */
+    --brand-navy: #2b3178;   /* 标志：深藏青 */
+    --danger: #e5484d;
+    --ok: #128a63;
+    --warn: #b07a1e;
+    --text: #24283a;
+    --muted: #8a90a6;
+    --line: rgba(31,35,51,.08);
+    --glass-border: rgba(255,255,255,.65);
+    --shadow: 0 12px 40px rgba(38,90,160,.12);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  html { background: #dfe4ee; }
+  body {
+    font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    border: 1px solid rgba(31,35,51,.12);
+    overflow: hidden;
+  }
+
+  * { scrollbar-width: thin; scrollbar-color: rgba(86,99,130,.42) transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: rgba(86,99,130,.34); border: 3px solid transparent; border-radius: 8px; background-clip: padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover { background: rgba(31,127,232,.55); border: 2px solid transparent; background-clip: padding-box; }
+  *::-webkit-scrollbar-corner { background: transparent; }
+
+  .window-titlebar {
+    height: 38px; display: flex; align-items: stretch; justify-content: flex-end;
+    background: rgba(255,255,255,.58); border-bottom: 1px solid rgba(31,35,51,.06);
+    backdrop-filter: blur(18px); -webkit-app-region: drag; user-select: none;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .window-controls { display: flex; -webkit-app-region: no-drag; }
+  .window-control {
+    width: 46px; height: 38px; display: grid; place-items: center; padding: 0;
+    border: 0; border-radius: 0; background: transparent; color: #4f566c; cursor: default;
+  }
+  .window-control:hover { background: rgba(31,35,51,.08); color: var(--text); }
+  .window-control.close:hover { background: #e5484d; color: #fff; }
+  .window-icon { width: 12px; height: 12px; position: relative; display: block; }
+  .window-icon.minimize::before { content: ""; position: absolute; left: 1px; right: 1px; top: 6px; height: 1px; background: currentColor; }
+  .window-icon.maximize { border: 1px solid currentColor; }
+  .window-icon.restore::before, .window-icon.restore::after { content: ""; position: absolute; width: 8px; height: 8px; border: 1px solid currentColor; background: transparent; }
+  .window-icon.restore::before { left: 3px; top: 0; }
+  .window-icon.restore::after { left: 0; top: 3px; background: rgba(255,255,255,.7); }
+  .window-icon.close::before, .window-icon.close::after { content: ""; position: absolute; left: 0; top: 5px; width: 13px; height: 1px; background: currentColor; }
+  .window-icon.close::before { transform: rotate(45deg); }
+  .window-icon.close::after { transform: rotate(-45deg); }
+  .window-control .restore-icon { display: none; }
+  .window-control.is-maximized .maximize-icon { display: none; }
+  .window-control.is-maximized .restore-icon { display: inline; }
+
+  /* 背景毛玻璃色块 */
+  .bg-blobs { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .blob { position: absolute; border-radius: 50%; filter: blur(80px); }
+  .blob.b1 { width: 460px; height: 460px; background: #c8d2ff; top: -140px; right: -80px; opacity: .55; }
+  .blob.b2 { width: 360px; height: 360px; background: #ffd9c9; top: 42%; left: -140px; opacity: .32; }
+  .blob.b3 { width: 340px; height: 340px; background: #cfeef0; bottom: -110px; left: 42%; opacity: .38; }
+
+  .app-shell {
+    position: relative; z-index: 1; display: flex; flex-direction: column;
+    height: calc(100vh - 38px); min-height: 0; overflow: hidden;
+  }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 22px 8px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand .logo {
+    width: 44px; height: 44px; border-radius: 12px; object-fit: cover;
+    background: #fff; border: 1px solid var(--glass-border);
+    box-shadow: 0 6px 18px rgba(31,127,232,.18); display: block;
+  }
+  .brand .title { font-weight: 700; font-size: 18px; line-height: 1.15; }
+  .brand .subtitle { font-size: 12px; color: var(--muted); }
+  .stats { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: relative; }
+  .stat-pill {
+    background: var(--card); border: 1px solid var(--glass-border); border-radius: 12px;
+    padding: 8px 14px; font-size: 13px; backdrop-filter: blur(12px); box-shadow: var(--shadow);
+  }
+  .stat-pill b { color: var(--primary); font-weight: 700; }
+  button.stat-pill { color: var(--text); font-family: inherit; }
+  .stat-interactive { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; transition: .15s; }
+  .stat-interactive:hover, .stat-interactive:focus-visible, .stat-interactive[aria-expanded="true"] {
+    border-color: rgba(31,127,232,.45); background: rgba(255,255,255,.88); outline: none;
+    box-shadow: 0 8px 24px rgba(31,127,232,.18);
+  }
+  .stat-chart-icon { width: 15px; height: 15px; color: var(--muted); flex: 0 0 auto; }
+  .stat-chart {
+    position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
+    width: min(430px, calc(100vw - 36px)); padding: 16px 16px 12px; z-index: 40;
+    background: rgba(255,255,255,.97); border: 1px solid rgba(31,127,232,.18); border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(31,35,51,.22); backdrop-filter: blur(18px);
+  }
+  .stat-chart.full { width: min(650px, calc(100vw - 80px)); }
+  .stat-chart-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .stat-chart-title { font-size: 15px; font-weight: 700; flex: 1; }
+  .stat-chart-total { color: var(--primary); font-size: 13px; font-weight: 700; }
+  .stat-chart-close {
+    display: none; width: 28px; height: 28px; border: 0; border-radius: 6px; background: transparent;
+    color: var(--muted); cursor: pointer; font-size: 22px; line-height: 1; align-items: center; justify-content: center;
+  }
+  .stat-chart.full .stat-chart-close { display: inline-flex; }
+  .stat-chart-close:hover { background: rgba(31,35,51,.07); color: var(--text); }
+  .stat-chart svg { display: block; width: 100%; height: 190px; overflow: visible; }
+  .stat-chart.full svg { height: 260px; }
+  .stat-chart-legend { display: flex; align-items: center; gap: 18px; margin: 0 0 2px 38px; font-size: 11px; color: var(--muted); }
+  .stat-chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .stat-chart-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; background: var(--primary); }
+  .stat-chart-legend .daily i { background: #0d9b6c; }
+  .stat-chart-grid { stroke: rgba(31,35,51,.10); stroke-width: 1; }
+  .stat-chart-axis { fill: var(--muted); font-size: 10px; }
+  .stat-chart-axis.daily { fill: #0d8760; }
+  .stat-chart-line { fill: none; stroke: var(--primary); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  .stat-chart-line.daily { stroke: #0d9b6c; stroke-width: 2.5; }
+  .stat-chart-area { fill: rgba(31,127,232,.10); }
+  .stat-chart-point { fill: #fff; stroke: var(--primary); stroke-width: 2; }
+  .stat-chart-point:hover { fill: var(--primary-2); stroke-width: 3; }
+  .stat-chart-point.daily { stroke: #0d9b6c; }
+  .stat-chart-point.daily:hover { fill: #0d9b6c; }
+  .stat-chart-caption { min-height: 18px; margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+  .data-actions { display: flex; gap: 8px; align-items: center; }
+  .data-actions .btn { padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+
+  .layout { display: flex; flex: 1; min-height: 0; overflow: hidden; gap: 18px; padding: 10px 22px 22px; }
+  .side-nav {
+    width: 200px; flex-shrink: 0; background: var(--card); border: 1px solid var(--glass-border);
+    border-radius: 20px; padding: 14px; backdrop-filter: blur(16px); box-shadow: var(--shadow);
+    align-self: flex-start;
+  }
+  .nav-label { font-size: 11px; color: var(--muted); letter-spacing: .1em; margin: 4px 8px 10px; text-transform: uppercase; }
+  .tab {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    padding: 12px 14px; border-radius: 12px; border: 1px solid transparent; background: transparent;
+    color: var(--muted); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: .15s; margin-bottom: 6px;
+  }
+  .tab:hover { background: rgba(31,127,232,.08); color: var(--primary); }
+  .tab.active { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; box-shadow: 0 6px 16px rgba(31,127,232,.3); }
+  .tab .ico { width: 22px; height: 22px; flex-shrink: 0; display: grid; place-items: center; }
+  .tab .ico svg { width: 20px; height: 20px; }
+
+  .main { flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
+  .view {
+    min-width: 0; height: 100%; overflow-y: auto; overflow-x: hidden;
+    overscroll-behavior: contain; scrollbar-gutter: stable;
+  }
+  .view.hidden { display: none; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--glass-border); border-radius: 24px;
+    padding: 26px; backdrop-filter: blur(18px); box-shadow: var(--shadow);
+  }
+  .hero {
+    background: var(--card); border: 1px solid var(--glass-border); border-radius: 28px;
+    padding: 30px; backdrop-filter: blur(18px); box-shadow: var(--shadow);
+    display: flex; flex-direction: column; min-height: min(calc(100vh - 170px), 760px);
+  }
+  .head h2 { font-size: 22px; margin: 0 0 6px; }
+  .head p { color: var(--muted); margin: 0 0 22px; font-size: 14px; }
+
+  label.field { display: block; margin: 0 0 10px; font-weight: 600; font-size: 14px; color: var(--text); }
+  textarea, input[type="text"] {
+    width: 100%; border: 1.5px solid var(--line); border-radius: 16px; padding: 14px 16px;
+    font-size: 16px; font-family: inherit; resize: none; outline: none; transition: .15s;
+    background: rgba(255,255,255,.8); color: var(--text);
+  }
+  textarea::placeholder, input::placeholder { color: #b4bac9; }
+  textarea:focus, input[type="text"]:focus { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 4px rgba(31,127,232,.12); }
+  .input-block.grow { flex: 1 0 auto; display: flex; flex-direction: column; min-height: 0; }
+  .input-block.grow textarea { flex: none; height: clamp(140px, 20vh, 210px); min-height: 140px; font-size: 18px; line-height: 1.6; width: 100%; }
+  .input-block textarea { min-height: 82px; font-size: 16px; line-height: 1.7; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid transparent; cursor: pointer; border-radius: 14px; padding: 13px 22px; font-size: 15px; font-weight: 600; font-family: inherit; transition: .15s; }
+  .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-2)); color: #fff; box-shadow: 0 6px 16px rgba(31,127,232,.3); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(31,127,232,.35); }
+  .btn-ghost { background: rgba(31,127,232,.1); color: var(--primary); }
+  .btn-ghost:hover { background: rgba(31,127,232,.16); }
+  .btn-soft { background: rgba(31,35,51,.05); color: var(--text); }
+  .btn-soft:hover { background: rgba(31,35,51,.09); }
+  .btn-danger { background: rgba(229,72,77,.1); color: var(--danger); }
+  .btn-danger:hover { background: rgba(229,72,77,.16); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+  .btn:disabled:hover { transform: none; }
+  .grow-btn { width: 100%; justify-content: center; }
+
+  .hero-actions, .btn-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+  .status-msg { margin-top: 16px; font-size: 14px; border-radius: 12px; padding: 12px 16px; display: none; }
+  .status-msg.show { display: block; }
+  .status-msg.ok { background: rgba(18,138,99,.1); color: var(--ok); }
+  .status-msg.err { background: rgba(229,72,77,.1); color: var(--danger); }
+  .status-msg.info { background: rgba(31,127,232,.1); color: var(--primary); }
+  .tip { font-size: 13px; color: var(--muted); margin-top: 16px; }
+  .tip.center { text-align: center; }
+
+  /* 可展开的备注面板 */
+  .advanced { margin-top: 18px; }
+  .toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; font-size: 15px; font-weight: 600; }
+  .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle .track { width: 42px; height: 24px; border-radius: 999px; background: rgba(31,35,51,.18); position: relative; transition: .18s; flex-shrink: 0; }
+  .toggle .thumb { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: .18s; }
+  .toggle input:checked + .track { background: var(--primary); }
+  .toggle input:checked + .track .thumb { left: 21px; }
+  .advanced-panel { margin-top: 16px; padding: 16px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.4); }
+  .advanced-panel .field { margin: 0 0 8px; font-size: 14px; }
+  .advanced-panel .tip { margin-top: 10px; }
+  .remark-panel textarea { min-height: 76px; max-height: 150px; }
+
+  /* 旧数据兼容样式（新版本不再创建挖空练习） */
+  .drill-sentence { font-size: 24px; font-weight: 600; color: var(--text); line-height: 1.5; word-break: break-word; }
+  .drill-sentence .word-blank { color: var(--primary); font-weight: 700; letter-spacing: 1px; }
+  .badge { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; background: rgba(31,127,232,.12); color: var(--primary); margin-left: 8px; vertical-align: middle; }
+
+  /* 复习 */
+  .review-modes { display: flex; gap: 12px; margin: 6px 0 20px; }
+  .mode-opt { display: flex; align-items: center; gap: 12px; flex: 1; padding: 14px 18px; border-radius: 16px; border: 1.5px solid var(--line); background: rgba(255,255,255,.5); cursor: pointer; transition: .15s; }
+  .mode-opt.selected { border-color: var(--primary); background: rgba(31,127,232,.08); box-shadow: 0 6px 16px rgba(31,127,232,.12); }
+  .mode-opt .bullet { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--muted); display: grid; place-items: center; flex-shrink: 0; }
+  .mode-opt.selected .bullet { border-color: var(--primary); }
+  .mode-opt.selected .bullet::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--primary); }
+  .mode-opt .mt { font-weight: 700; }
+  .mode-opt .md { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  #tab-add .hero, #tab-review .hero { min-height: auto; }
+  #tab-review .hero { padding-top: 24px; padding-bottom: 24px; }
+  .review-card { text-align: center; }
+  .review-progress { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .review-hint { color: var(--muted); font-size: 14px; }
+  .review-cn { font-size: clamp(24px, 2.4vw, 30px); font-weight: 700; margin: 8px 0 12px; color: var(--primary); line-height: 1.25; }
+  .answer-area textarea { min-height: 88px; height: 88px; max-height: 180px; font-size: 18px; line-height: 1.55; width: 100%; }
+  .answer-actions { display: flex; gap: 12px; margin-top: 8px; justify-content: flex-end; }
+  #btn-reveal-wrap { margin-top: 8px; }
+  .diff-hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .feedback .dm { color: #e23b4d; font-weight: 600; }
+  .feedback .dm-ok { color: #0d9b6c; font-weight: 600; }
+  .feedback { border-radius: 18px; padding: 14px 18px; margin-top: 8px; text-align: left; display: none; }
+  .feedback.show { display: block; }
+  .feedback.correct { background: rgba(18,138,99,.1); border: 1px solid rgba(18,138,99,.2); }
+  .feedback.wrong { background: rgba(229,72,77,.1); border: 1px solid rgba(229,72,77,.2); }
+  .feedback .head { font-weight: 700; font-size: 17px; margin-bottom: 10px; }
+  .feedback.correct .head { color: var(--ok); }
+  .feedback.wrong .head { color: var(--danger); }
+  .feedback .line { margin: 5px 0; font-size: 15px; overflow-wrap: anywhere; word-break: break-word; }
+  .feedback .answer { color: var(--primary); font-weight: 700; }
+  .fb-stats { margin-top: 8px; font-size: 13px; color: var(--muted); padding-top: 8px; border-top: 1px dashed var(--line); }
+  .fb-stats .err { color: var(--danger); font-weight: 600; }
+  .review-remark { margin-top: 10px; padding: 12px 14px; border: 1px solid rgba(31,127,232,.18); border-radius: 14px; background: rgba(255,255,255,.55); }
+  .review-remark-title { color: var(--primary); font-weight: 700; font-size: 14px; margin-bottom: 7px; }
+  .review-remark-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; font-size: 14px; }
+  .review-remark-empty { color: var(--muted); font-size: 13px; }
+  .review-remark-editor { margin-top: 8px; }
+  .review-remark-editor textarea { min-height: 62px; max-height: 140px; font-size: 14px; line-height: 1.5; padding: 10px 12px; }
+  .review-remark-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .review-remark-actions .btn { padding: 8px 14px; font-size: 13px; border-radius: 10px; }
+  .result-actions { display: flex; gap: 12px; margin-top: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--muted); gap: 16px; }
+
+  /* 句子库 */
+  .list-toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .list-toolbar input[type="text"] { flex: 1; min-width: 160px; }
+  select.sort-select { padding: 12px 14px; font-size: 14px; border-radius: 12px; border: 1.5px solid var(--line); background: rgba(255,255,255,.7); color: var(--text); font-family: inherit; cursor: pointer; }
+  #list-container { padding-right: 4px; }
+  .sentence-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; background: rgba(255,255,255,.6); }
+  .sent-body { flex: 1; min-width: 0; }
+  .sent-en { font-weight: 600; font-size: 16px; }
+  .sent-zh { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  .sent-remark { margin-top: 7px; padding: 7px 10px; border-radius: 10px; background: rgba(31,127,232,.07); color: var(--text); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .sent-meta { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .sent-meta .ok { color: var(--ok); font-weight: 600; }
+  .sent-meta .no { color: var(--danger); font-weight: 600; }
+  .sent-actions { display: flex; gap: 6px; }
+  .sent-actions .btn { padding: 9px 14px; font-size: 13px; border-radius: 10px; }
+  .edit-row { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+  .edit-row input, .edit-row textarea { padding: 9px 12px; font-size: 14px; }
+  .edit-row textarea {
+    width: 100%; min-height: 44px; height: 44px; max-height: 180px; line-height: 1.45;
+    resize: none; overflow-y: auto; overflow-wrap: anywhere; white-space: pre-wrap;
+    field-sizing: content;
+  }
+  .edit-row .btn-row { margin-top: 4px; }
+  .empty-list { text-align: center; color: var(--muted); padding: 40px 10px; }
+
+  /* 笔记 */
+  .notes-toolbar { margin-bottom: 16px; }
+  #notes-list { padding-right: 4px; }
+  .note-form { margin: 4px 0 18px; padding: 18px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.5); }
+  .note-form label.field { margin: 0 0 8px; }
+  .note-form input, .note-form textarea { margin-bottom: 12px; }
+  .note-form textarea { min-height: 120px; }
+  .note-item { border: 1px solid var(--line); border-radius: 14px; margin-bottom: 10px; background: rgba(255,255,255,.6); overflow: hidden; }
+  .note-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; cursor: pointer; }
+  .note-head:hover { background: rgba(232,236,250,.5); }
+  .note-title { font-weight: 600; font-size: 15px; flex: 1; min-width: 0; word-break: break-word; }
+  .note-date { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .note-actions { display: flex; gap: 6px; }
+  .note-actions .btn { padding: 7px 12px; font-size: 13px; border-radius: 10px; }
+  .note-body { padding: 0 16px 16px; color: var(--text); font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; border-top: 1px dashed var(--line); padding-top: 12px; }
+  .restore-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; background: rgba(255,255,255,.6); }
+  .restore-info { font-size: 13px; color: var(--text); word-break: break-word; }
+  .restore-item .btn { padding: 7px 12px; font-size: 13px; border-radius: 10px; flex-shrink: 0; }
+
+  /* 弹窗 */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(20,25,50,.4); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; z-index: 50; padding: 18px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: rgba(255,255,255,.92); border: 1px solid var(--glass-border); border-radius: 20px; padding: 24px; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.25); backdrop-filter: blur(20px); }
+  .modal h3 { margin: 0 0 12px; }
+  .modal p { color: var(--muted); font-size: 15px; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+
+  /* 重复出错单词选择 */
+  .word-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;
+    padding: 10px 14px; border: 1.5px solid var(--line); border-radius: 999px;
+    background: rgba(255,255,255,.6); font-size: 15px; font-weight: 600; transition: .15s;
+  }
+  .chip input { accent-color: var(--primary); }
+  .chip.selected { border-color: var(--danger); background: rgba(229,72,77,.1); color: var(--danger); }
+  .chip .cnt { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .chip .err-dot { font-size: 13px; }
+  .sent-err-warn { color: var(--danger); font-size: 12px; margin-top: 6px; }
+
+  .toast { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%); background: rgba(31,35,51,.92); color: #fff; padding: 12px 22px; border-radius: 24px; font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.3); opacity: 0; pointer-events: none; transition: .25s; z-index: 60; max-width: 90vw; }
+
+  /* 服务断开提示条 */
+  .offline-banner { position: fixed; top: 0; left: 0; right: 0; z-index: 45; background: rgba(229,72,77,.96); color: #fff; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 10px 18px; font-size: 14px; flex-wrap: wrap; box-shadow: 0 4px 18px rgba(229,72,77,.3); }
+  .offline-banner.hidden { display: none; }
+  .offline-banner .hint { font-size: 12px; opacity: .92; }
+  .offline-banner .btn { padding: 6px 14px; font-size: 13px; border-radius: 10px; }
+  .toast.show { opacity: 1; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 760px) {
+    .app-shell { height: calc(100vh - 38px); min-height: 0; }
+    .topbar { padding: 14px 14px 4px; }
+    .layout { flex-direction: column; min-height: 0; overflow: hidden; padding: 10px 14px 18px; gap: 12px; }
+    .side-nav { width: 100%; position: static; display: flex; flex-direction: row; gap: 6px; padding: 8px; border-radius: 16px; align-self: stretch; }
+    .side-nav .nav-label { display: none; }
+    .tab { flex: 1; justify-content: center; padding: 12px; margin-bottom: 0; }
+    .tab .ico { display: none; }
+    .main { min-height: 0; overflow: hidden; }
+    .hero { padding: 22px; border-radius: 22px; }
+    #tab-review .hero { padding: 20px; }
+    .review-modes { flex-direction: column; }
+  }
+
+  /* iPhone / PWA 手机版布局 */
+  .mobile-app { height: 100dvh; border: 0; overscroll-behavior: none; }
+  .mobile-app .window-titlebar { display: none; }
+  .mobile-app .app-shell { height: 100dvh; min-height: 0; overflow: hidden; }
+  .mobile-app .topbar {
+    flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 8px 10px;
+    padding: calc(10px + env(safe-area-inset-top)) 12px 8px;
+  }
+  .mobile-app .brand { flex: 1; min-width: 170px; }
+  .mobile-app .brand .logo { width: 38px; height: 38px; border-radius: 10px; }
+  .mobile-app .brand .title { font-size: 16px; }
+  .mobile-app .brand .subtitle { display: none; }
+  .mobile-app .stats { order: 3; width: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .mobile-app .stat-pill { min-width: 0; padding: 7px 5px; border-radius: 10px; font-size: 12px; text-align: center; justify-content: center; }
+  .mobile-app .stat-chart-icon { display: none; }
+  .mobile-app .data-actions { margin-left: auto; gap: 5px; }
+  .mobile-app .data-actions .btn { min-height: 38px; padding: 7px 9px; font-size: 12px; }
+  .mobile-app .layout {
+    position: relative; flex: 1; display: block; min-height: 0; overflow: hidden;
+    padding: 8px 10px calc(74px + env(safe-area-inset-bottom));
+  }
+  .mobile-app .side-nav {
+    position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; width: auto;
+    display: flex; flex-direction: row; gap: 4px; align-items: stretch;
+    padding: 7px 8px calc(7px + env(safe-area-inset-bottom));
+    border-radius: 18px 18px 0 0; background: rgba(250,251,255,.94);
+    border-width: 1px 0 0; backdrop-filter: blur(22px); box-shadow: 0 -8px 28px rgba(38,90,160,.13);
+  }
+  .mobile-app .side-nav .nav-label { display: none; }
+  .mobile-app .tab {
+    flex: 1; min-width: 0; min-height: 52px; margin: 0; padding: 6px 3px;
+    flex-direction: column; justify-content: center; gap: 2px; font-size: 11px; border-radius: 12px;
+  }
+  .mobile-app .tab .ico { display: grid; width: 20px; height: 20px; }
+  .mobile-app .tab .ico svg { width: 19px; height: 19px; }
+  .mobile-app .main { width: 100%; height: 100%; min-height: 0; overflow: hidden; }
+  .mobile-app .view { height: 100%; overflow-y: auto; overflow-x: hidden; scrollbar-gutter: auto; padding: 0 2px 8px; }
+  .mobile-app .card, .mobile-app .hero { min-height: 100%; padding: 18px 16px; border-radius: 20px; }
+  .mobile-app #tab-review .hero { padding: 18px 14px; }
+  .mobile-app .head h2 { font-size: 20px; }
+  .mobile-app .review-modes { flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .mobile-app .mode-opt { padding: 11px 12px; }
+  .mobile-app .review-cn { font-size: 23px; }
+  .mobile-app .answer-area textarea { min-height: 96px; height: 96px; }
+  .mobile-app .btn { min-height: 44px; }
+  .mobile-app .list-toolbar { align-items: stretch; }
+  .mobile-app .list-toolbar input { flex-basis: 100%; }
+  .mobile-app .sentence-item { padding: 14px 12px; }
+  .mobile-app .stat-chart, .mobile-app .stat-chart.full {
+    position: fixed; z-index: 120; top: calc(68px + env(safe-area-inset-top)); left: 10px; right: 10px;
+    width: auto; max-height: calc(100dvh - 150px - env(safe-area-inset-bottom)); overflow-y: auto;
+    transform: none; padding: 14px 12px 10px;
+  }
+  .mobile-app .stat-chart svg, .mobile-app .stat-chart.full svg { height: 210px; }
+  .mobile-app .modal-overlay { z-index: 160; padding: 12px; }
+  .mobile-app .modal { width: 100%; max-height: calc(100dvh - 32px); overflow-y: auto; padding: 20px 16px; }
+  .mobile-app .toast { bottom: calc(78px + env(safe-area-inset-bottom)); font-size: 13px; }
+  .install-guide {
+    position: fixed; z-index: 180; inset: 0; display: flex; align-items: flex-end;
+    padding: 18px 14px calc(18px + env(safe-area-inset-bottom)); background: rgba(20,25,50,.34);
+  }
+  .install-guide-card { width: 100%; padding: 18px; border-radius: 20px; background: #fff; box-shadow: 0 18px 48px rgba(31,35,51,.25); }
+  .install-guide-card h3 { margin: 0 0 8px; font-size: 18px; }
+  .install-guide-card p { margin: 0 0 14px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+  @media (min-width: 761px) {
+    .mobile-app .app-shell { width: min(520px, 100%); margin: 0 auto; }
+    .mobile-app .side-nav { left: 50%; right: auto; width: min(520px, 100%); transform: translateX(-50%); }
+  }
+</style>
+</head>
+<body class="mobile-app">
+<div class="window-titlebar" id="window-titlebar">
+  <div class="window-controls">
+    <button type="button" class="window-control" id="window-minimize" title="最小化" aria-label="最小化"><span class="window-icon minimize"></span></button>
+    <button type="button" class="window-control" id="window-maximize" title="最大化" aria-label="最大化">
+      <span class="window-icon maximize maximize-icon"></span><span class="window-icon restore restore-icon"></span>
+    </button>
+    <button type="button" class="window-control close" id="window-close" title="关闭" aria-label="关闭"><span class="window-icon close"></span></button>
+  </div>
+</div>
+<div class="bg-blobs" aria-hidden="true">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+</div>
+
+<div class="app-shell">
+  <header class="topbar">
+    <div class="brand">
+      <img class="logo" src="logo.jpg" alt="英语句子积累">
+      <div>
+        <div class="title">英语句子积累</div>
+        <div class="subtitle">记下写错的句子，自动翻译随时复习</div>
+      </div>
+    </div>
+    <div class="stats">
+      <button type="button" class="stat-pill stat-interactive" data-stat-kind="added" aria-expanded="false" aria-haspopup="dialog">
+        <svg class="stat-chart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></svg>
+        <span>已积累 <b id="statTotal">0</b></span>
+      </button>
+      <button type="button" class="stat-pill stat-interactive" data-stat-kind="reviewed" aria-expanded="false" aria-haspopup="dialog">
+        <svg class="stat-chart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></svg>
+        <span>已复习 <b id="statReviewed">0</b></span>
+      </button>
+      <div class="stat-pill">正确率 <b id="statAcc">--</b></div>
+      <div class="stat-chart hidden" id="stat-chart" role="dialog" aria-label="学习趋势">
+        <div class="stat-chart-head">
+          <div class="stat-chart-title" id="stat-chart-title"></div>
+          <div class="stat-chart-total" id="stat-chart-total"></div>
+          <button type="button" class="stat-chart-close" id="stat-chart-close" title="关闭" aria-label="关闭">×</button>
+        </div>
+        <div class="stat-chart-legend" aria-hidden="true">
+          <span><i></i>累计</span>
+          <span class="daily"><i></i>单日</span>
+        </div>
+        <div id="stat-chart-body"></div>
+        <div class="stat-chart-caption" id="stat-chart-caption"></div>
+      </div>
+    </div>
+    <div class="data-actions">
+      <button id="btn-export" class="btn btn-soft" title="导出全部（句子+笔记+重复出错）">导出</button>
+      <button id="btn-import" class="btn btn-soft" title="导入全部（自动识别句子/笔记/重复出错）">导入</button>
+      <button id="btn-restore" class="btn btn-soft" title="从自动备份恢复">恢复</button>
+      <input type="file" id="import-file" accept="application/json,.json" class="hidden">
+    </div>
+  </header>
+
+  <div class="offline-banner hidden" id="offline-banner">
+    <span>⚠ 本地数据服务暂时不可用</span>
+    <button class="btn btn-primary" id="btn-reconnect">重新连接</button>
+    <span class="hint">若仍无法连接，请重新打开英语学习助手</span>
+  </div>
+
+  <div class="layout">
+    <nav class="side-nav">
+      <div class="nav-label">功能</div>
+      <button class="tab active" data-tab="add">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>
+        <span>录入</span>
+      </button>
+      <button class="tab" data-tab="review">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/></svg></span>
+        <span>复习</span>
+      </button>
+      <button class="tab" data-tab="list">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3" y2="6.01"/><line x1="3" y1="12" x2="3" y2="12.01"/><line x1="3" y1="18" x2="3" y2="18.01"/></svg></span>
+        <span>句子库</span>
+      </button>
+      <button class="tab" data-tab="notes">
+        <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="M3 3v18h18"/></svg></span>
+        <span>笔记</span>
+      </button>
+    </nav>
+
+    <main class="main">
+      <!-- 录入 -->
+      <section id="tab-add" class="view">
+        <div class="hero">
+          <div class="head">
+            <h2>录入句子</h2>
+          </div>
+          <div class="input-block grow">
+            <label class="field" for="in-en">英文句子</label>
+            <textarea id="in-en" data-input-language="en" placeholder="例如：I will go to the school yesterday." lang="en-US" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" inputmode="latin"></textarea>
+          </div>
+          <div class="input-block">
+            <label class="field" for="in-zh">中文翻译</label>
+            <textarea id="in-zh" data-input-language="zh" placeholder="点击「翻译」自动填充，或直接输入中文" lang="zh-CN" spellcheck="false" autocomplete="off" autocorrect="off" inputmode="text"></textarea>
+          </div>
+          <div class="hero-actions">
+            <button id="btn-add" class="btn btn-primary">翻译</button>
+            <button id="btn-save-zh" class="btn btn-primary">保存句子</button>
+          </div>
+          <div class="advanced">
+            <label class="toggle">
+              <input type="checkbox" id="remark-toggle">
+              <span class="track"><span class="thumb"></span></span>
+              <span class="tlabel">添加备注</span>
+            </label>
+            <div class="advanced-panel remark-panel hidden" id="remark-panel">
+              <label class="field" for="in-remark">这条句子的备注</label>
+              <textarea id="in-remark" data-input-language="zh" placeholder="例如：容易混淆的词、语法提醒、自己的理解……" lang="zh-CN" spellcheck="false"></textarea>
+              <p class="tip">备注会在复习检查答案后显示，也可以在复习时继续补充或修改。</p>
+            </div>
+          </div>
+          <div class="status-msg" id="add-msg"></div>
+        </div>
+      </section>
+
+      <!-- 复习 -->
+      <section id="tab-review" class="view hidden">
+        <div class="hero">
+          <div class="head">
+            <h2>开始复习</h2>
+          </div>
+          <div class="review-modes">
+            <div class="mode-opt selected" data-mode="curve">
+              <span class="bullet"></span>
+              <div><div class="mt">智能模式</div><div class="md">按照遗忘曲线和智能大模型进行复习</div></div>
+            </div>
+            <div class="mode-opt" data-mode="order">
+              <span class="bullet"></span>
+              <div><div class="mt">顺序模式</div><div class="md">按录入顺序逐个练习</div></div>
+            </div>
+            <div class="mode-opt" data-mode="random">
+              <span class="bullet"></span>
+              <div><div class="mt">随机模式</div><div class="md">完全打乱顺序，随机抽考</div></div>
+            </div>
+          </div>
+
+          <div id="review-setup">
+            <button id="btn-start" class="btn btn-primary grow-btn">开始复习</button>
+            <p class="tip center">会显示中文，请凭记忆输入对应的英语句子。</p>
+          </div>
+
+          <div id="review-active" class="review-card hidden">
+            <div class="review-progress" id="review-progress"></div>
+            <div class="review-hint" id="review-hint">请把这个句子翻译成英语：</div>
+            <div class="review-cn" id="review-cn"></div>
+            <div id="drill-sentence" class="drill-sentence hidden"></div>
+            <div class="answer-area">
+              <textarea id="answer-input" data-input-language="en" placeholder="在这里输入你的英语答案…" lang="en-US" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" inputmode="latin"></textarea>
+              <div class="answer-actions">
+                <button id="btn-check" class="btn btn-primary">检查</button>
+              </div>
+            </div>
+            <div id="btn-reveal-wrap">
+              <button id="btn-reveal" class="btn btn-ghost grow-btn">没想出来 · 显示答案</button>
+            </div>
+            <div class="feedback" id="feedback">
+              <div class="head" id="fb-head"></div>
+              <div class="line" id="fb-your"></div>
+              <div class="line" id="fb-answer"></div>
+              <div class="review-remark" id="review-remark">
+                <div class="review-remark-title">备注</div>
+                <div class="review-remark-text" id="review-remark-text"></div>
+                <div class="review-remark-editor hidden" id="review-remark-editor">
+                  <textarea id="review-remark-input" data-input-language="zh" placeholder="记录这道题的新问题、易错点或记忆提示……" lang="zh-CN" spellcheck="false"></textarea>
+                  <div class="review-remark-actions">
+                    <button id="btn-remark-cancel" class="btn btn-soft">取消</button>
+                    <button id="btn-remark-save" class="btn btn-primary">保存备注</button>
+                  </div>
+                </div>
+                <button id="btn-remark-edit" class="btn btn-ghost" style="margin-top:8px; padding:8px 14px; font-size:13px;">添加 / 修改备注</button>
+              </div>
+              <div class="fb-stats" id="fb-stats"></div>
+              <div class="result-actions">
+                <button id="btn-typo" class="btn btn-soft" style="display:none;">手误（打错了，不算错）</button>
+                <button id="btn-next" class="btn btn-primary">下一个</button>
+                <button id="btn-fini" class="btn btn-soft">结束本轮</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="review-done" class="empty-state hidden">
+            <div id="review-done-text">本轮复习结束！</div>
+            <button id="btn-restart" class="btn btn-primary">再来一轮</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 句子库 -->
+      <section id="tab-list" class="view hidden">
+        <div class="card">
+          <div class="head">
+            <h2>句子库</h2>
+          </div>
+          <div class="list-toolbar">
+            <input type="text" id="search" placeholder="搜索英语、中文或备注…" spellcheck="false" autocomplete="off">
+            <select id="sort-select" class="sort-select" title="列表排序">
+              <option value="time">按添加时间</option>
+              <option value="acc">正确率 低→高</option>
+              <option value="wrong">答错 多→少</option>
+            </select>
+            <button id="btn-sync" class="btn btn-primary">重新载入</button>
+            <button id="btn-clear" class="btn btn-danger">清空全部</button>
+          </div>
+          <div id="list-container"></div>
+          <div id="list-empty" class="empty-list">还没有句子，去「录入」添加吧。</div>
+        </div>
+      </section>
+
+      <!-- 笔记 -->
+      <section id="tab-notes" class="view hidden">
+        <div class="card">
+          <div class="head">
+            <h2>笔记</h2>
+          </div>
+          <div class="notes-toolbar">
+            <button id="btn-note-add" class="btn btn-primary">＋ 新建笔记</button>
+          </div>
+
+          <div id="note-form" class="note-form hidden">
+            <label class="field" for="note-title">标题</label>
+            <input type="text" id="note-title" data-input-language="zh" placeholder="笔记标题（可选）" lang="zh-CN" spellcheck="false" autocomplete="off">
+            <label class="field" for="note-content">内容</label>
+            <textarea id="note-content" data-input-language="zh" placeholder="写点内容…" lang="zh-CN" spellcheck="false"></textarea>
+            <div class="btn-row">
+              <button id="btn-note-save" class="btn btn-primary">保存笔记</button>
+              <button id="btn-note-cancel" class="btn btn-soft">取消</button>
+            </div>
+          </div>
+
+          <div id="notes-list"></div>
+          <div id="notes-empty" class="empty-list">还没有笔记，点「新建笔记」写一条吧。</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">确认</h3>
+    <p id="modal-text"></p>
+    <div class="modal-actions">
+      <button class="btn btn-soft" id="modal-cancel">取消</button>
+      <button class="btn btn-danger" id="modal-ok">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 重复出错单词提示弹窗 -->
+<div class="modal-overlay" id="word-modal">
+  <div class="modal">
+    <h3 id="word-title">发现以前出现过的单词</h3>
+    <p id="word-desc" style="color:var(--muted); font-size:14px; margin:0 0 14px;"></p>
+    <div id="word-chips" class="word-chips"></div>
+    <div class="modal-actions">
+      <button class="btn btn-soft" id="word-skip">先不标记，直接保存</button>
+      <button class="btn btn-primary" id="word-ok">标记为重复出错</button>
+    </div>
+  </div>
+</div>
+
+<!-- 句子库：直接标记重复忘记的单词 -->
+<div class="modal-overlay" id="wordmark-modal">
+  <div class="modal">
+    <h3>标记重复忘记的单词</h3>
+    <p style="color:var(--muted); font-size:14px; margin:0 0 12px;">输入这个句子里你反复忘记、想打上“重复出错”标记的词（用空格或逗号隔开）：</p>
+    <input type="text" id="wordmark-input" data-input-language="en" lang="en-US" inputmode="latin" spellcheck="false" autocomplete="off" placeholder="例如：behavioral, norm">
+    <p id="wordmark-err" style="color:var(--danger); font-size:13px; margin:8px 0 0; display:none;"></p>
+    <div class="modal-actions">
+      <button class="btn btn-soft" id="wordmark-cancel">取消</button>
+      <button class="btn btn-primary" id="wordmark-ok">标记</button>
+    </div>
+  </div>
+</div>
+
+<!-- 从自动备份恢复 -->
+<div class="modal-overlay" id="restore-modal">
+  <div class="modal" style="max-width:480px;">
+    <h3>从自动备份恢复</h3>
+    <p style="color:var(--muted); font-size:14px; margin:0 0 12px;">选择一份快照，将用其「覆盖」当前数据（恢复前会先自动备份当前数据）。快照包含句子+笔记+重复出错。</p>
+    <div id="restore-list" style="max-height:300px; overflow:auto;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-soft" id="restore-close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="install-guide hidden" id="install-guide">
+  <div class="install-guide-card">
+    <h3>安装到 iPhone 主屏幕</h3>
+    <p>请使用 Safari 打开本页，点击底部“分享”按钮，再选择“添加到主屏幕”。安装后可以像普通 App 一样打开和离线使用。</p>
+    <button class="btn btn-primary grow-btn" id="install-guide-close">知道了</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+ * 数据存储：使用 localStorage，保证重启浏览器后数据仍在。
+ * 同时支持导出/导入 JSON 备份到本地文件。
+ * ============================================================ */
+const STORE_KEY = "englishLearnerDB.v1";
+const SESSION_STORE_KEY = "englishLearnerReviewSession.v1";
+const LOCAL_BACKUPS_KEY = "englishLearnerBackups.v1";
+const MAX_LOCAL_BACKUPS = 12;
+const MOBILE_APP = true;
+
+// db 是内存中的唯一数据源；保存到哪里由 serverMode 决定。
+let db = { version: 1, sentences: [], wordErrors: {}, notes: [], activity: { reviewEvents: [], reviewBaseline: null } };
+let serverMode = false;   // true: 连接到了共享后端服务（可跨设备同步）
+let serverOK = false;      // 最近一次与服务器通信是否成功
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.sentences)) {
+        if (!parsed.wordErrors) parsed.wordErrors = {};
+        if (!parsed.notes) parsed.notes = [];
+        if (!parsed.activity) parsed.activity = { reviewEvents: [], reviewBaseline: null };
+        return parsed;
+      }
+    }
+  } catch (e) { /* ignore */ }
+  return { version: 1, sentences: [], wordErrors: {}, notes: [], activity: { reviewEvents: [], reviewBaseline: null } };
+}
+
+function saveLocal() {
+  try {
+    const next = JSON.stringify(db);
+    const previous = localStorage.getItem(STORE_KEY);
+    if (previous && previous !== next) {
+      try { snapshotLocalBackup(JSON.parse(previous)); } catch (e) { }
+    }
+    localStorage.setItem(STORE_KEY, next);
+  } catch (e) {
+    toast("保存失败：浏览器存储不可用，请改用导出备份功能。");
+  }
+}
+
+function readLocalBackups() {
+  try {
+    const values = JSON.parse(localStorage.getItem(LOCAL_BACKUPS_KEY) || "[]");
+    return Array.isArray(values) ? values : [];
+  } catch (e) { return []; }
+}
+
+function snapshotLocalBackup(value) {
+  if (!value || !Array.isArray(value.sentences)) return;
+  try {
+    const data = JSON.parse(JSON.stringify(value));
+    const backups = readLocalBackups();
+    const serialized = JSON.stringify(data);
+    if (backups[0] && JSON.stringify(backups[0].data) === serialized) return;
+    backups.unshift({ time: Date.now(), data });
+    localStorage.setItem(LOCAL_BACKUPS_KEY, JSON.stringify(backups.slice(0, MAX_LOCAL_BACKUPS)));
+  } catch (e) { /* 手机存储空间不足时不影响正常保存 */ }
+}
+
+// 检测是否通过共享服务打开（http://…），以此决定数据模式。
+async function detectServerMode() {
+  if (MOBILE_APP) { serverMode = false; serverOK = false; return; }
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 3000);
+    const res = await fetch("api/ping", { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (res.ok) {
+      const d = await res.json();
+      serverMode = d && d.ok === true;
+      return;
+    }
+  } catch (e) { /* not server mode */ }
+  serverMode = false;
+}
+
+// 从服务器拉取最新数据（覆盖本地内存；也写一份本地缓存）。
+async function pullFromServer() {
+  try {
+    const res = await fetch("api/sentences");
+    if (!res.ok) throw new Error("bad status");
+    const d = await res.json();
+    if (d && Array.isArray(d.sentences)) {
+      db.sentences = d.sentences;
+      db.wordErrors = d.wordErrors || {};
+      db.notes = d.notes || [];
+      db.activity = d.activity || { reviewEvents: [], reviewBaseline: null };
+      ensureActivityHistory(true);
+      saveLocal();
+      serverOK = true;
+    }
+  } catch (e) {
+    serverOK = false;
+    serverMode = false;
+  }
+}
+
+// 把当前整份数据推送到服务器（服务模式下，电脑与手机共用同一份），
+// 同时总是先写本地缓存作为兜底。
+function saveDB() {
+  saveLocal();
+  if (serverMode) {
+    return fetch("api/sentences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(db),
+    })
+      .then((r) => { serverOK = r && r.ok; updateConnPill(); })
+      .catch(() => { serverOK = false; updateConnPill(); });
+  }
+  updateConnPill();
+  return Promise.resolve(true);
+}
+
+// 复习轮次单独保存，不触发数据快照；关闭软件后仍能恢复到同一题、同一判题状态。
+let sessionSaveTimer = null;
+function persistSession(immediate = false) {
+  clearTimeout(sessionSaveTimer);
+  const write = () => {
+    if (!session) return Promise.resolve();
+    if (!serverMode) {
+      try { localStorage.setItem(SESSION_STORE_KEY, JSON.stringify(session)); } catch (e) { }
+      return Promise.resolve();
+    }
+    return fetch("api/review-session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(session),
+      keepalive: true,
+    }).catch(() => {});
+  };
+  if (immediate) return write();
+  sessionSaveTimer = setTimeout(write, 180);
+  return Promise.resolve();
+}
+
+async function loadReviewSession() {
+  if (!serverMode) {
+    try {
+      const value = JSON.parse(localStorage.getItem(SESSION_STORE_KEY) || "null");
+      return value && Array.isArray(value.list) ? value : null;
+    } catch (e) { return null; }
+  }
+  try {
+    const res = await fetch("api/review-session");
+    const data = await res.json();
+    return data && data.session ? data.session : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearSavedSession() {
+  clearTimeout(sessionSaveTimer);
+  if (serverMode) return fetch("api/review-session", { method: "DELETE", keepalive: true }).catch(() => {});
+  else {
+    try { localStorage.removeItem(SESSION_STORE_KEY); } catch (e) { }
+    return Promise.resolve();
+  }
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+/* ============================================================
+ * 自动翻译（英 → 中）
+ * 服务模式由后端并行竞速（国内网络 Google 常被墙，会自动走 MyMemory，约 1 秒）；
+ * 本地模式由浏览器并行竞速。均带结果缓存，减少等待。
+ * ============================================================ */
+const _transCache = new Map();
+async function translate(text, from = "en", to = "zh-CN") {
+  const t = (text || "").trim();
+  if (!t) return "";
+  const key = from + "|" + to + "|" + t.toLowerCase();
+  if (_transCache.has(key)) return _transCache.get(key);
+
+  // 服务模式：由后端翻译（后端已做并行竞速+缓存）
+  if (serverMode) {
+    try {
+      const res = await fetch("api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: t, from: from, to: to }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        if (d.translation && d.translation.trim()) { _transCache.set(key, d.translation.trim()); return d.translation.trim(); }
+      }
+    } catch (e) { /* fall back to client */ }
+  }
+
+  // 本地模式：并行竞速（谁先成功用谁）
+  const g = (async () => {
+    const url = "https://translate.googleapis.com/translate_a/single?client=gtx&sl=" +
+      encodeURIComponent(from) + "&tl=" + encodeURIComponent(to) + "&dt=t&q=" + encodeURIComponent(t);
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+    if (!res.ok) throw new Error("google");
+    const data = await res.json();
+    const out = Array.isArray(data) && Array.isArray(data[0]) ? data[0].map(seg => (seg && seg[0]) ? seg[0] : "").join("") : "";
+    if (!out || !out.trim()) throw new Error("google empty");
+    return out.trim();
+  })();
+  const m = (async () => {
+    const url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(t) +
+      "&langpair=" + encodeURIComponent(from) + "|" + encodeURIComponent(to);
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    const out = data && data.responseData && data.responseData.translatedText;
+    if (!out || !out.trim() || out.indexOf("MYMEMORY WARNING") === 0) throw new Error("mymemory");
+    return out.trim();
+  })();
+
+  const result = await new Promise((resolve) => {
+    let pending = 2, done = false;
+    const finish = (v) => { if (!done) { done = true; resolve(v); } };
+    const dec = () => { if (!done && --pending === 0) resolve(""); };
+    [g, m].forEach((p) => { p.then(finish).catch(dec); });
+  });
+
+  if (result) _transCache.set(key, result);
+  return result; // 失败返回空
+}
+
+/* ============================================================
+ * 界面元素
+ * ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+let lastInputLanguageRequest = { element: null, language: "", time: 0 };
+function requestInputLanguage(target) {
+  const field = target && target.closest ? target.closest("[data-input-language]") : null;
+  if (!field || !window.desktopInputLanguage) return;
+  const language = field.dataset.inputLanguage;
+  const now = Date.now();
+  if (lastInputLanguageRequest.element === field && lastInputLanguageRequest.language === language && now - lastInputLanguageRequest.time < 120) return;
+  lastInputLanguageRequest = { element: field, language: language, time: now };
+  window.desktopInputLanguage.set(language);
+}
+document.addEventListener("pointerdown", e => requestInputLanguage(e.target), true);
+document.addEventListener("focusin", e => requestInputLanguage(e.target), true);
+
+const windowControlApi = window.desktopWindow;
+if (windowControlApi) {
+  $("#window-minimize").addEventListener("click", () => windowControlApi.minimize());
+  $("#window-maximize").addEventListener("click", () => windowControlApi.toggleMaximize());
+  $("#window-close").addEventListener("click", () => windowControlApi.close());
+  $("#window-titlebar").addEventListener("dblclick", event => {
+    if (!event.target.closest(".window-control")) windowControlApi.toggleMaximize();
+  });
+  windowControlApi.onMaximizedChange(maximized => {
+    const button = $("#window-maximize");
+    button.classList.toggle("is-maximized", maximized);
+    button.title = maximized ? "还原" : "最大化";
+    button.setAttribute("aria-label", maximized ? "还原" : "最大化");
+  });
+}
+
+function toast(msg) {
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+function showMsg(sel, text, type) {
+  const el = $(sel);
+  if (!text) { el.classList.remove("show"); return; }
+  el.textContent = text;
+  el.className = "status-msg show " + type;
+}
+
+/* ============================================================
+ * Tab 切换
+ * ============================================================ */
+let currentTab = "add";
+function switchTab(name) {
+  currentTab = name;
+  $$(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === name));
+  $("#tab-add").classList.toggle("hidden", name !== "add");
+  $("#tab-review").classList.toggle("hidden", name !== "review");
+  $("#tab-list").classList.toggle("hidden", name !== "list");
+  $("#tab-notes").classList.toggle("hidden", name !== "notes");
+  if (name === "list") renderList();
+  if (name === "notes") renderNotes();
+  if (name === "review") refreshReviewSetup();
+}
+$$(".tab").forEach(t => t.addEventListener("click", () => switchTab(t.dataset.tab)));
+
+/* ============================================================
+ * 统计
+ * ============================================================ */
+function reviewAttemptTotal() {
+  return db.sentences.reduce((sum, sentence) =>
+    sum + (Number(sentence.correctCount) || 0) + (Number(sentence.wrongCount) || 0), 0);
+}
+
+function ensureActivityHistory(reconcile = false) {
+  if (!db.activity || typeof db.activity !== "object") db.activity = {};
+  if (!Array.isArray(db.activity.reviewEvents)) db.activity.reviewEvents = [];
+  const validIds = new Set(db.sentences.map(sentence => sentence.id));
+  db.activity.reviewEvents = db.activity.reviewEvents.filter(event =>
+    event && Number(event.at) > 0 && typeof event.sentenceId === "string" && validIds.has(event.sentenceId))
+    .map(event => ({ at: Number(event.at), sentenceId: event.sentenceId, correct: !!event.correct }));
+
+  const currentTotal = reviewAttemptTotal();
+  if (!db.activity.reviewBaseline || typeof db.activity.reviewBaseline !== "object") {
+    db.activity.reviewBaseline = {
+      at: Date.now(),
+      count: Math.max(0, currentTotal - db.activity.reviewEvents.length),
+      source: "pre-2.2.0",
+    };
+  } else {
+    db.activity.reviewBaseline.at = Number(db.activity.reviewBaseline.at) || Date.now();
+    db.activity.reviewBaseline.count = Math.max(0, Math.floor(Number(db.activity.reviewBaseline.count) || 0));
+    db.activity.reviewBaseline.source = db.activity.reviewBaseline.source || "legacy";
+    if (reconcile) {
+      db.activity.reviewBaseline.count = Math.max(0, currentTotal - db.activity.reviewEvents.length);
+    }
+  }
+  return db.activity;
+}
+
+function recordReviewActivity(sentenceId, correct, replaceLast = false) {
+  const activity = ensureActivityHistory(false);
+  const events = activity.reviewEvents;
+  if (replaceLast) {
+    for (let index = events.length - 1; index >= 0; index--) {
+      if (events[index].sentenceId === sentenceId) {
+        events[index].correct = !!correct;
+        return;
+      }
+    }
+  }
+  events.push({ at: Date.now(), sentenceId: sentenceId, correct: !!correct });
+}
+
+function localDayStart(value) {
+  const date = new Date(value);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function buildStatSeries(kind, full = false, now = Date.now()) {
+  const activity = ensureActivityHistory(false);
+  const end = localDayStart(now);
+  let start = end - 6 * DAY_MS;
+  if (full) {
+    if (kind === "added") {
+      const created = db.sentences.map(sentence => Number(sentence.createdAt)).filter(value => value > 0);
+      start = created.length ? localDayStart(Math.min(...created)) : end;
+    } else {
+      const times = [Number(activity.reviewBaseline.at) || now]
+        .concat(activity.reviewEvents.map(event => Number(event.at)).filter(value => value > 0));
+      start = localDayStart(Math.min(...times));
+    }
+  }
+  if (start > end) start = end;
+
+  const series = [];
+  for (let day = start; day <= end; day += DAY_MS) {
+    const dayEnd = day + DAY_MS - 1;
+    const cumulative = kind === "added"
+      ? db.sentences.filter(sentence => (Number(sentence.createdAt) || 0) <= dayEnd).length
+      : activity.reviewBaseline.count + activity.reviewEvents.filter(event => event.at <= dayEnd).length;
+    const daily = kind === "added"
+      ? db.sentences.filter(sentence => {
+          const createdAt = Number(sentence.createdAt) || 0;
+          return createdAt >= day && createdAt <= dayEnd;
+        }).length
+      : activity.reviewEvents.filter(event => event.at >= day && event.at <= dayEnd).length;
+    series.push({ at: day, cumulative: cumulative, daily: daily });
+  }
+  return series;
+}
+
+function chartDateLabel(value, full) {
+  const date = new Date(value);
+  return (full ? String(date.getFullYear()).slice(-2) + "/" : "") +
+    (date.getMonth() + 1) + "/" + date.getDate();
+}
+
+function renderStatChart(kind, full) {
+  const popup = $("#stat-chart");
+  const body = $("#stat-chart-body");
+  const series = buildStatSeries(kind, full);
+  const width = full ? 720 : 400;
+  const height = full ? 260 : 190;
+  const margin = { left: 38, right: 38, top: 12, bottom: 30 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+  const maxCumulative = Math.max(1, ...series.map(point => point.cumulative));
+  const maxDaily = Math.max(1, ...series.map(point => point.daily));
+  const x = index => series.length === 1
+    ? margin.left + plotWidth / 2
+    : margin.left + (index / (series.length - 1)) * plotWidth;
+  const yCumulative = value => margin.top + plotHeight - (value / maxCumulative) * plotHeight;
+  const yDaily = value => margin.top + plotHeight - (value / maxDaily) * plotHeight;
+  const pointsFor = (field, yScale) => series.length === 1
+    ? margin.left + "," + yScale(series[0][field]).toFixed(2) + " " + (width - margin.right) + "," + yScale(series[0][field]).toFixed(2)
+    : series.map((point, index) => x(index).toFixed(2) + "," + yScale(point[field]).toFixed(2)).join(" ");
+  const cumulativePoints = pointsFor("cumulative", yCumulative);
+  const dailyPoints = pointsFor("daily", yDaily);
+  const areaPoints = series.length === 1
+    ? margin.left + "," + (margin.top + plotHeight) + " " + margin.left + "," + yCumulative(series[0].cumulative).toFixed(2) + " " +
+      (width - margin.right) + "," + yCumulative(series[0].cumulative).toFixed(2) + " " + (width - margin.right) + "," + (margin.top + plotHeight)
+    : margin.left + "," + (margin.top + plotHeight) + " " + cumulativePoints + " " +
+      x(series.length - 1) + "," + (margin.top + plotHeight);
+  const cumulativeTicks = Array.from(new Set([0, Math.round(maxCumulative / 2), maxCumulative])).sort((a, b) => a - b);
+  const dailyTicks = Array.from(new Set([0, Math.round(maxDaily / 2), maxDaily])).sort((a, b) => a - b);
+  const xLabelIndexes = Array.from(new Set([0, Math.floor((series.length - 1) / 2), series.length - 1]));
+  const pointStep = Math.max(1, Math.ceil(series.length / 24));
+
+  let svg = '<svg viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="' +
+    (kind === "added" ? "累计句子" : "累计复习") + '曲线">';
+  cumulativeTicks.forEach(value => {
+    const yy = yCumulative(value);
+    svg += '<line class="stat-chart-grid" x1="' + margin.left + '" y1="' + yy + '" x2="' + (width - margin.right) + '" y2="' + yy + '"></line>' +
+      '<text class="stat-chart-axis" x="' + (margin.left - 7) + '" y="' + (yy + 3) + '" text-anchor="end">' + value + '</text>';
+  });
+  dailyTicks.forEach(value => {
+    const yy = yDaily(value);
+    svg += '<text class="stat-chart-axis daily" x="' + (width - margin.right + 7) + '" y="' + (yy + 3) + '" text-anchor="start">' + value + '</text>';
+  });
+  xLabelIndexes.forEach(index => {
+    svg += '<text class="stat-chart-axis" x="' + x(index) + '" y="' + (height - 8) + '" text-anchor="middle">' +
+      chartDateLabel(series[index].at, full) + '</text>';
+  });
+  svg += '<polygon class="stat-chart-area" points="' + areaPoints + '"></polygon>' +
+    '<polyline class="stat-chart-line cumulative" points="' + cumulativePoints + '"></polyline>' +
+    '<polyline class="stat-chart-line daily" points="' + dailyPoints + '"></polyline>';
+  series.forEach((point, index) => {
+    if (index % pointStep !== 0 && index !== series.length - 1) return;
+    const unit = kind === "added" ? " 条" : " 次";
+    const date = new Date(point.at).toLocaleDateString();
+    svg += '<circle class="stat-chart-point cumulative" cx="' + x(index) + '" cy="' + yCumulative(point.cumulative) + '" r="4" tabindex="0">' +
+      '<title>' + date + '，累计：' + point.cumulative + unit + '</title></circle>' +
+      '<circle class="stat-chart-point daily" cx="' + x(index) + '" cy="' + yDaily(point.daily) + '" r="3.5" tabindex="0">' +
+      '<title>' + date + '，单日：' + point.daily + unit + '</title></circle>';
+  });
+  svg += '</svg>';
+
+  body.innerHTML = svg;
+  body.dataset.pointCount = String(series.length);
+  body.dataset.mode = full ? "full" : "recent";
+  body.dataset.cumulativeLatest = String(series.length ? series[series.length - 1].cumulative : 0);
+  body.dataset.dailyLatest = String(series.length ? series[series.length - 1].daily : 0);
+  popup.dataset.kind = kind;
+  popup.classList.toggle("full", full);
+  $("#stat-chart-title").textContent = (kind === "added" ? "积累趋势" : "复习趋势") + (full ? " · 全部记录" : " · 最近 7 天");
+  const latest = series.length ? series[series.length - 1].cumulative : 0;
+  $("#stat-chart-total").textContent = latest + (kind === "added" ? " 条" : " 次");
+  const baseline = ensureActivityHistory(false).reviewBaseline;
+  $("#stat-chart-caption").textContent = kind === "reviewed" && baseline.count > 0
+    ? "旧版累计 " + baseline.count + " 次作为迁移基线；从 2.2.0 起逐次记录。"
+    : "";
+}
+
+let statChartPinned = false;
+let statChartCloseTimer = null;
+function openStatChart(kind, full = false) {
+  clearTimeout(statChartCloseTimer);
+  statChartPinned = full;
+  renderStatChart(kind, full);
+  $("#stat-chart").classList.remove("hidden");
+  $$(".stat-interactive").forEach(button =>
+    button.setAttribute("aria-expanded", String(button.dataset.statKind === kind)));
+}
+
+function closeStatChart() {
+  clearTimeout(statChartCloseTimer);
+  statChartPinned = false;
+  $("#stat-chart").classList.add("hidden");
+  $$(".stat-interactive").forEach(button => button.setAttribute("aria-expanded", "false"));
+}
+
+function scheduleStatChartClose() {
+  clearTimeout(statChartCloseTimer);
+  statChartCloseTimer = setTimeout(() => { if (!statChartPinned) closeStatChart(); }, 180);
+}
+
+$$(".stat-interactive").forEach(button => {
+  button.addEventListener("mouseenter", () => { if (!statChartPinned) openStatChart(button.dataset.statKind, false); });
+  button.addEventListener("mouseleave", scheduleStatChartClose);
+  button.addEventListener("focus", () => { if (!statChartPinned) openStatChart(button.dataset.statKind, false); });
+  button.addEventListener("blur", scheduleStatChartClose);
+  button.addEventListener("click", event => {
+    event.stopPropagation();
+    openStatChart(button.dataset.statKind, true);
+  });
+});
+$("#stat-chart").addEventListener("mouseenter", () => clearTimeout(statChartCloseTimer));
+$("#stat-chart").addEventListener("mouseleave", scheduleStatChartClose);
+$("#stat-chart").addEventListener("click", event => event.stopPropagation());
+$("#stat-chart-close").addEventListener("click", closeStatChart);
+document.addEventListener("click", () => { if (statChartPinned) closeStatChart(); });
+document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("#stat-chart").classList.contains("hidden")) closeStatChart(); });
+
+function refreshStats() {
+  const s = db.sentences;
+  const total = s.length;
+  const reviewed = reviewAttemptTotal();
+  const correct = s.reduce((a, x) => a + x.correctCount, 0);
+  const acc = reviewed > 0 ? Math.round((correct / reviewed) * 100) + "%" : "--";
+  $("#statTotal").textContent = total;
+  $("#statReviewed").textContent = reviewed;
+  $("#statAcc").textContent = acc;
+  const chart = $("#stat-chart");
+  if (!chart.classList.contains("hidden") && chart.dataset.kind) {
+    renderStatChart(chart.dataset.kind, chart.classList.contains("full"));
+  }
+}
+
+// 更新头部连接状态标识
+function updateConnPill() {
+  const el = $("#conn-pill");
+  if (!el) return;
+  if (serverMode && serverOK) {
+    el.textContent = "桌面本地数据";
+    el.style.borderColor = "#22c1a3";
+    el.style.color = "#128a63";
+  } else if (serverMode && !serverOK) {
+    el.textContent = "连接中断";
+    el.style.borderColor = "#e5a54b";
+    el.style.color = "#b07a1e";
+  } else {
+    el.textContent = "本地模式";
+    el.style.borderColor = "";
+    el.style.color = "";
+  }
+}
+
+/* 连接检测：定时 ping 服务，掉线时显示顶部提示条，恢复后自动重连 */
+function updateOfflineBanner() {
+  $("#offline-banner").classList.toggle("hidden", !(serverMode && !serverOK));
+}
+async function checkConnection() {
+  if (MOBILE_APP) return;
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 2500);
+    const res = await fetch("api/ping", { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (res.ok) {
+      const wasOffline = serverMode && !serverOK;
+      serverOK = true;
+      if (wasOffline) {
+        await pullFromServer();
+        refreshStats(); refreshReviewSetup(); renderList();
+        toast("本地数据已重新连接");
+      }
+    } else if (serverMode) {
+      serverOK = false;
+    }
+  } catch (e) {
+    if (serverMode) serverOK = false;
+  }
+  updateConnPill();
+  updateOfflineBanner();
+}
+$("#btn-reconnect").addEventListener("click", checkConnection);
+setInterval(checkConnection, 8000);
+
+/* ============================================================
+ * 录入句子
+ * ============================================================ */
+const inputEn = $("#in-en");
+const inputZh = $("#in-zh");
+const remarkInput = $("#in-remark");
+const remarkToggle = $("#remark-toggle");
+const remarkPanel = $("#remark-panel");
+
+remarkToggle.addEventListener("change", () => {
+  remarkPanel.classList.toggle("hidden", !remarkToggle.checked);
+  if (remarkToggle.checked) remarkInput.focus();
+});
+
+function escapeRegex(s) { return (s || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+function wordExists(sentence, word) {
+  return new RegExp("\\b" + escapeRegex(word) + "\\b", "i").test(sentence || "");
+}
+$("#btn-add").addEventListener("click", async () => {
+  const en = inputEn.value.trim();
+  if (!en) { showMsg("#add-msg", "请先输入一个英语句子再翻译。", "err"); return; }
+
+  $("#btn-add").disabled = true;
+  showMsg("#add-msg", "正在自动翻译…", "info");
+  inputZh.placeholder = "正在翻译，请稍候…";
+
+  const zh = await translate(en);
+  inputZh.value = zh;
+  inputZh.placeholder = zh ? "" : "自动翻译失败，请手动填写中文";
+  $("#btn-add").disabled = false;
+
+  showMsg("#add-msg", zh ? "翻译完成，可修改后保存。" : "翻译失败（可能需要联网），请手动填写中文后保存。", zh ? "ok" : "err");
+  inputZh.focus();
+});
+
+/* ============================================================
+ * 重复出错单词检测
+ * ============================================================ */
+const STOPWORDS = new Set(("the,a,an,i,you,he,she,it,we,they,me,him,her,us,them,my,your,his,its,our,their," +
+  "this,that,these,those,to,of,in,on,at,for,with,by,from,and,or,but,not,is,are,was,were,be,been,being,am," +
+  "do,does,did,have,has,had,will,would,can,could,should,shall,may,might,must,as,so,if,then,than,there,here," +
+  "when,where,why,how,what,who,whom,whose,which,into,about,over,under,again,also,very,just,because,while," +
+  "during,before,after,up,down,out,off,no,yes,let,get,got").split(","));
+
+/* 从句子中提取“有意义”的单词（去标点、去虚词、去重） */
+function wordTokens(en) {
+  const raw = (en || "").toLowerCase().match(/[a-z']+/g) || [];
+  const seen = new Set(), out = [];
+  for (const w of raw) {
+    if (!w || STOPWORDS.has(w) || w.length < 2) continue;
+    if (!seen.has(w)) { seen.add(w); out.push(w); }
+  }
+  return out;
+}
+function priorSignificantWordSet() {
+  const set = new Set();
+  (db.sentences || []).forEach(s => wordTokens(s.en).forEach(w => set.add(w)));
+  return set;
+}
+/* 找出新句子中“在以前句子出现过”的单词 */
+function findRecurringWords(en) {
+  const prior = priorSignificantWordSet();
+  return wordTokens(en).filter(w => prior.has(w));
+}
+/* 标记这些词为重复出错 */
+function markWordErrors(errs) {
+  const now = Date.now();
+  (errs || []).forEach(w => {
+    const k = w.toLowerCase();
+    const rec = db.wordErrors[k] || { count: 0, lastAt: now };
+    rec.count = (rec.count || 0) + 1;
+    rec.lastAt = now;
+    db.wordErrors[k] = rec;
+  });
+}
+
+/* 句子库：直接标记“重复忘记”的单词 */
+let wordmarkId = null;
+function openWordMark(id) {
+  wordmarkId = id;
+  const inp = document.getElementById("wordmark-input");
+  const err = document.getElementById("wordmark-err");
+  inp.value = "";
+  err.style.display = "none";
+  document.getElementById("wordmark-modal").classList.add("show");
+  inp.focus();
+}
+function wordmarkClose() {
+  document.getElementById("wordmark-modal").classList.remove("show");
+  wordmarkId = null;
+}
+function wordmarkSave() {
+  const s = db.sentences.find(x => x.id === wordmarkId);
+  if (!s) { wordmarkClose(); return; }
+  const raw = document.getElementById("wordmark-input").value;
+  const words = raw.split(/[\s,，、]+/).map(w => w.trim()).filter(Boolean);
+  const err = document.getElementById("wordmark-err");
+  if (!words.length) { err.textContent = "请输入要标记的词。"; err.style.display = "block"; return; }
+  const bad = words.filter(w => !wordExists(s.en, w));
+  if (bad.length) { err.textContent = "句子里找不到这些词：" + bad.join("、"); err.style.display = "block"; return; }
+  markWordErrors(words);
+  saveDB(); renderList(); refreshStats();
+  toast("已标记重复出错：" + words.join("、"));
+  wordmarkClose();
+}
+document.getElementById("wordmark-ok").addEventListener("click", wordmarkSave);
+document.getElementById("wordmark-cancel").addEventListener("click", wordmarkClose);
+document.getElementById("wordmark-modal").addEventListener("click", e => { if (e.target === e.currentTarget) wordmarkClose(); });
+document.getElementById("wordmark-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); wordmarkSave(); } });
+
+/* 弹出“重复出错”选择框 */
+function showWordPrompt(recurring, onDone) {
+  const overlay = document.getElementById("word-modal");
+  const chips = document.getElementById("word-chips");
+  document.getElementById("word-title").textContent = "发现以前出现过的单词";
+  document.getElementById("word-desc").textContent =
+    "这些词曾在你之前的句子里出现过，这次是不是又忘了？点选你“又忘了”的词：";
+  chips.innerHTML = "";
+  recurring.forEach(w => {
+    const rec = db.wordErrors[w];
+    const label = document.createElement("label");
+    label.className = "chip";
+    label.innerHTML = '<input type="checkbox" value="' + escapeHtml(w) + '"> <span>' + escapeHtml(w) +
+      '</span>' + (rec && rec.count ? '<span class="err-dot">（已重复出错 ' + rec.count + ' 次）</span>' : '');
+    chips.appendChild(label);
+  });
+  chips.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", () => cb.closest(".chip").classList.toggle("selected", cb.checked));
+  });
+
+  const gather = () => Array.from(chips.querySelectorAll("input:checked")).map(cb => cb.value);
+  let done = false;
+  const finish = () => overlay.classList.remove("show");
+  const ok = () => { if (done) return; done = true; const sel = gather(); finish(); onDone(sel); };
+  const skip = () => { if (done) return; done = true; finish(); onDone([]); };
+  document.getElementById("word-ok").onclick = ok;
+  document.getElementById("word-skip").onclick = skip;
+  overlay.onclick = (e) => { if (e.target === overlay) skip(); };
+  overlay.classList.add("show");
+}
+
+function doSave(afterSave) {
+  const en = inputEn.value.trim();
+  const zh = inputZh.value.trim();
+  const remark = remarkToggle.checked ? remarkInput.value.trim() : "";
+  if (!en) { showMsg("#add-msg", "请先输入英语句子。", "err"); return; }
+  if (!zh) { showMsg("#add-msg", "请填写中文翻译。", "err"); return; }
+
+  const words = []; // 新版本不再创建强化单词；旧数据中的强化记录仍保留并可继续复习。
+
+  const commit = (errs) => {
+    db.sentences.push({
+      id: genId(), en: en, zh: zh, createdAt: Date.now(),
+      correctCount: 0, wrongCount: 0, lastReviewedAt: null,
+      focusWords: words, remark: remark, stage: 0, nextReviewAt: 0
+    });
+    if (errs && errs.length) markWordErrors(errs);
+    saveDB(); refreshStats();
+    showMsg("#add-msg", "已保存「" + en + "」" + (words.length ? "（强化单词：" + words.join("、") + "）" : "") +
+      (errs && errs.length ? "（标记重复出错：" + errs.join("、") + "）" : "") + "。", "ok");
+    inputEn.value = ""; inputZh.value = ""; remarkInput.value = "";
+    remarkToggle.checked = false; remarkPanel.classList.add("hidden");
+    inputEn.focus(); toast("已保存 1 句");
+    if (afterSave) afterSave();
+  };
+
+  const recurring = findRecurringWords(en);
+  if (recurring.length) showWordPrompt(recurring, (errs) => commit(errs));
+  else commit([]);
+}
+
+$("#btn-save-zh").addEventListener("click", () => doSave());
+
+/* 回车快捷添加中文 */
+inputZh.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("#btn-save-zh").click(); } });
+
+/* ============================================================
+ * 复习模式
+ * ============================================================ */
+let reviewMode = "curve";
+$$(".mode-opt").forEach(m => m.addEventListener("click", () => {
+  $$(".mode-opt").forEach(x => x.classList.remove("selected"));
+  m.classList.add("selected");
+  reviewMode = m.dataset.mode;
+  if (!session) refreshReviewSetup();
+}));
+
+let session = null; // { list: [ids], idx, mode, reinforce, draft, feedback, lastWrongPreState }
+let lastWrongPreState = null; // 记录被判错前该句的状态，用于“手误”撤销这次错误
+
+function refreshReviewSetup() {
+  // 若正在复习中（未结束），切回该 tab 时恢复进度，不重置。
+  if (session) {
+    $("#review-setup").classList.add("hidden");
+    $("#review-done").classList.add("hidden");
+    $("#review-active").classList.remove("hidden");
+    showCurrentReview();
+    return;
+  }
+  const empty = db.sentences.length === 0;
+  $("#review-setup").classList.remove("hidden");
+  $("#review-active").classList.add("hidden");
+  $("#review-done").classList.add("hidden");
+  if (empty) {
+    $("#btn-start").textContent = "请先到「录入句子」添加句子";
+    $("#btn-start").disabled = true;
+  } else {
+    $("#btn-start").disabled = false;
+    if (reviewMode === "curve") {
+      const due = countReady();
+      $("#btn-start").textContent = due > 0
+        ? "开始复习（待复习 " + due + " 句）"
+        : "开始复习（暂无到期，先练最近的 " + db.sentences.length + " 句）";
+    } else {
+      $("#btn-start").textContent = "开始复习（共 " + db.sentences.length + " 句）";
+    }
+  }
+}
+
+$("#btn-start").addEventListener("click", () => {
+  if (db.sentences.length === 0) { toast("还没有句子，先添加吧。"); return; }
+  startSession();
+});
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 3.6e6;
+const STAGE_CAP = 20;         // stage 对稳定度的贡献封顶，避免“高掌握度词永远不复习”
+const MAX_NEGLECT_DAYS = 45;  // 超过这么多天没复习，无条件纳入，防止被饿死
+
+/* 错误率（平滑）：错误次数 / (总复习次数 + 1)。0=全对，越高越易错 */
+function errorRate(s) {
+  const n = (s.correctCount || 0) + (s.wrongCount || 0);
+  return n > 0 ? (s.wrongCount / (n + 1)) : 0;
+}
+
+/* 记忆稳定度 S（小时）：连续答对越多越稳，错误越多越不稳；stage 封顶 */
+function stabilityHours(stage, err) {
+  return 24 * (1 + 0.5 * Math.min(stage || 0, STAGE_CAP)) * (1 - 0.15 * (err || 0));
+}
+
+/* 连续“逾期度”（0→1）：用 Δt 相对 S 的倍数衡量，越久越急、且会随天数线增 */
+function overdueNorm(dt, S) {
+  const ratio = dt / S;
+  return Math.max(0, Math.min(1, (ratio - 0.8) / 3));
+}
+
+/* 是否纳入本轮：新词 / 易错 / 到目标保留率 / 严重逾期 / 太久没练（防饿死） */
+function needsReview(s) {
+  const n = (s.correctCount || 0) + (s.wrongCount || 0);
+  if (n === 0) return true;                       // 新词：优先引入
+  const err = errorRate(s);
+  if (err > 0.3) return true;                     // 太易错
+  const S = stabilityHours(s.stage, err);
+  const last = s.lastReviewedAt || s.createdAt || Date.now();
+  const dt = (Date.now() - last) / HOUR_MS;
+  const R = Math.exp(-dt / S);                    // 记忆保留率
+  if (R < 0.8) return true;                       // 到了目标保留率以下 → 该复习
+  if (overdueNorm(dt, S) >= 0.5) return true;     // 或逾期超过一半 → 也要练
+  if (dt > MAX_NEGLECT_DAYS * 24) return true;    // 或太久没练 → 无条件纳入
+  return false;
+}
+function countReady() {
+  return db.sentences.filter(needsReview).length;
+}
+
+/* 综合优先级 = 0.5×遗忘紧迫度 + 0.25×错误率 + 0.25×连续逾期度；新词=1.0 */
+function reviewScore(s) {
+  const n = (s.correctCount || 0) + (s.wrongCount || 0);
+  if (n === 0) return 1.0 + Math.random() * 0.05;     // 新词：最高优先 + 一点随机
+  const err = errorRate(s);
+  const S = stabilityHours(s.stage, err);
+  const last = s.lastReviewedAt || s.createdAt || Date.now();
+  const dt = (Date.now() - last) / HOUR_MS;
+  const R = Math.exp(-dt / S);
+  const urgency = 1 - R;                          // 越遗忘越优先
+  const ov = overdueNorm(dt, S);                   // 越逾期越优先
+  let p = 0.5 * urgency + 0.25 * err + 0.25 * ov;
+  // 句子含“重复出错词”则略加分，让易错词更容易被复习到
+  if (wordTokens(s.en).some(w => db.wordErrors[w])) p += 0.05;
+  return p + Math.random() * 0.05;                // 随机扰动，避免顺序死板
+}
+
+/* 记忆曲线：先过滤“需要复习”的，再按优先级从高到低排序 */
+function buildCurveIds() {
+  let pool = db.sentences.filter(needsReview);
+  if (pool.length === 0) {
+    // 全都摆平了：按“上次复习最早（遗忘最久）”的少量来练
+    pool = db.sentences.slice().sort((a, b) =>
+      ((a.lastReviewedAt || a.createdAt || 0) - (b.lastReviewedAt || b.createdAt || 0)));
+  }
+  const scored = pool.map(s => ({ id: s.id, score: reviewScore(s) }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(x => x.id);
+}
+
+function startSession() {
+  let ids;
+  if (reviewMode === "curve") {
+    ids = buildCurveIds();
+  } else if (reviewMode === "random") {
+    ids = db.sentences.map(s => s.id);
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+  } else {
+    ids = db.sentences.map(s => s.id);
+  }
+  session = { list: ids, idx: 0, mode: reviewMode, reinforce: false, draft: "", feedback: null, lastWrongPreState: null };
+  lastWrongPreState = null;
+  $("#review-setup").classList.add("hidden");
+  $("#review-done").classList.add("hidden");
+  $("#review-active").classList.remove("hidden");
+  persistSession(true);
+  showCurrentReview();
+}
+
+function currentSentence() {
+  const id = session.list[session.idx];
+  return db.sentences.find(s => s.id === id);
+}
+
+// 统一刷新「下一个/再试一次」按钮：巩固中(刚答错待重试)=再试一次；否则=下一个
+function updateNextButton() {
+  const rein = !!(session && session.reinforce);
+  const isLast = session ? session.idx >= session.list.length - 1 : false;
+  const btn = $("#btn-next");
+  if (!btn) return;
+  btn.textContent = rein ? "再试一次" : "下一个";
+  btn.classList.toggle("hidden", !rein && isLast);
+}
+
+function showCurrentReview() {
+  const s = currentSentence();
+  if (!s) {
+    toast("本轮中的句子已不存在，请点击“结束本轮”后重新开始。");
+    return;
+  }
+
+  const total = session.list.length;
+  const modeLabel = session.mode === "curve" ? "智能模式" : (session.mode === "random" ? "随机模式" : "顺序");
+  const rein = !!session.reinforce;
+  $("#review-progress").textContent = "第 " + (session.idx + 1) + " / " + total + " 句" + " · " + modeLabel + (rein ? " · 巩固" : "");
+
+  const drill = false;
+  $("#review-cn").textContent = s.zh;
+
+  if (drill) {
+    $("#review-hint").textContent = rein ? "上一句没写对，再填一次：" : "请填入缺失的单词：";
+    $("#drill-sentence").classList.remove("hidden");
+    $("#drill-sentence").innerHTML = blankSentence(s.en, s.focusWords);
+  } else {
+    $("#review-hint").textContent = rein ? "上一句没写对，请再写一次：" : "请把这个句子翻译成英语：";
+    $("#drill-sentence").classList.add("hidden");
+    $("#drill-sentence").innerHTML = "";
+  }
+
+  const input = $("#answer-input");
+  input.value = session.draft || "";
+  input.placeholder = drill ? "在这里输入缺失的单词…" : "在这里输入你的英语答案…";
+  $("#feedback").classList.remove("show", "correct", "wrong");
+  $("#btn-typo").style.display = "none";
+  $("#btn-reveal-wrap").classList.remove("hidden");
+
+  updateNextButton();
+  if (session.feedback) {
+    restoreSavedFeedback(s);
+  } else {
+    input.focus();
+  }
+}
+
+function restoreSavedFeedback(s) {
+  const saved = session && session.feedback;
+  if (!saved) return;
+  if (!saved.revealed) {
+    renderFeedback(s, saved.user || "", !!saved.correct, saved.headText || "", !!saved.showTypo);
+    return;
+  }
+  const drill = isDrill(s);
+  const answerText = answerTextFor(s);
+  const fb = $("#feedback");
+  fb.classList.remove("hidden", "correct", "wrong");
+  fb.classList.add("show", "wrong");
+  $("#fb-head").textContent = saved.headText || "看过了答案，稍后再试这句：";
+  $("#fb-your").innerHTML = "你的答案：<i>（空）</i>";
+  $("#fb-answer").innerHTML = (drill ? "正确单词：" : "正确写法：") + "<span class='answer'>" + escapeHtml(answerText) + "</span>" + (drill ? fullSentenceHint(s) : "");
+  renderReviewRemark(s);
+  renderSentenceStats(s);
+  $("#btn-typo").style.display = "none";
+  $("#btn-reveal-wrap").classList.add("hidden");
+  updateNextButton();
+}
+
+/* 把要强化的单词挖空展示 */
+function blankSentence(en, words) {
+  let out = escapeHtml(en || "");
+  (words || []).forEach(w => {
+    const re = new RegExp("\\b" + escapeRegex(w) + "\\b", "gi");
+    out = out.replace(re, '<span class="word-blank">______</span>');
+  });
+  return out;
+}
+
+/* 按在句子中出现的顺序返回要强化的单词 */
+function expectedWords(s) {
+  const en = (s.en || "").toLowerCase();
+  return (s.focusWords || []).slice().sort((a, b) => {
+    const ia = en.search(new RegExp("\\b" + escapeRegex(a) + "\\b", "i"));
+    const ib = en.search(new RegExp("\\b" + escapeRegex(b) + "\\b", "i"));
+    return (ia === -1 ? 9999 : ia) - (ib === -1 ? 9999 : ib);
+  });
+}
+
+/* 答案归一化：忽略大小写、首尾/多余空格、常见标点符号 */
+function normalizeAnswer(s) {
+  return (s || "")
+    .toLowerCase()
+    .replace(/[.,!?;:'"“”‘’()\[\]{}…\-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* 整词差异（基于 LCS）：以“词”为单位对照，一个词里错任一字母 → 整词标红 */
+function splitWords(s) {
+  return ((s || "").trim().replace(/\s+/g, " ").split(/\s+/)).filter(Boolean);
+}
+function normWord(w) {
+  return (w || "").toLowerCase().replace(/[.,!?;:'"“”‘’()\[\]{}…\-]/g, "");
+}
+function wordDiff(user, answer) {
+  const a = splitWords(user), b = splitWords(answer);
+  const aw = a.map(normWord), bw = b.map(normWord);
+  const n = a.length, m = b.length;
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      dp[i][j] = aw[i - 1] === bw[j - 1] ? dp[i - 1][j - 1] + 1 : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  const aM = new Array(n).fill(false), bM = new Array(m).fill(false);
+  let i = n, j = m;
+  while (i > 0 && j > 0) {
+    if (aw[i - 1] === bw[j - 1]) { aM[i - 1] = true; bM[j - 1] = true; i--; j--; }
+    else if (dp[i - 1][j] >= dp[i][j - 1]) i--;
+    else j--;
+  }
+  return { userWords: a, answerWords: b, userMatch: aM, answerMatch: bM };
+}
+function colorizeWords(words, matchArr) {
+  return words.map((w, k) =>
+    '<span class="' + (matchArr[k] ? "dm-ok" : "dm") + '">' + escapeHtml(w) + "</span>"
+  ).join(" ");
+}
+
+function isDrill(s) { return false; }
+function answerTextFor(s) { return isDrill(s) ? expectedWords(s).join(" ") : s.en; }
+function fullSentenceHint(s) {
+  return '<div class="diff-hint">完整句子：<span style="color:var(--text)">' + escapeHtml(s.en) + "</span></div>";
+}
+
+function renderReviewRemark(s) {
+  const text = (s && typeof s.remark === "string") ? s.remark.trim() : "";
+  const out = $("#review-remark-text");
+  out.textContent = text || "还没有备注。";
+  out.classList.toggle("review-remark-empty", !text);
+  $("#review-remark-editor").classList.add("hidden");
+  $("#btn-remark-edit").classList.remove("hidden");
+}
+
+$("#btn-remark-edit").addEventListener("click", () => {
+  const s = currentSentence();
+  if (!s) return;
+  $("#review-remark-input").value = s.remark || "";
+  $("#review-remark-editor").classList.remove("hidden");
+  $("#btn-remark-edit").classList.add("hidden");
+  $("#review-remark-input").focus();
+});
+
+$("#btn-remark-cancel").addEventListener("click", () => {
+  const s = currentSentence();
+  if (s) renderReviewRemark(s);
+});
+
+$("#btn-remark-save").addEventListener("click", () => {
+  const s = currentSentence();
+  if (!s) return;
+  s.remark = $("#review-remark-input").value.trim();
+  saveDB();
+  renderReviewRemark(s);
+  toast(s.remark ? "备注已保存" : "备注已清空");
+});
+
+function renderFeedback(s, user, correct, headText, showTypo) {
+  const drill = isDrill(s);
+  const answerText = answerTextFor(s);
+  const fb = $("#feedback");
+  fb.classList.remove("hidden", "correct", "wrong");
+  fb.classList.add("show", correct ? "correct" : "wrong");
+  // 仅“首次答错被计数”时才显示“手误”；巩固重试/看答案都不显示
+  $("#btn-typo").style.display = showTypo ? "" : "none";
+  $("#fb-head").textContent = headText;
+  if (correct) {
+    $("#fb-your").innerHTML = "你的答案：<span class='dm-ok'>" + escapeHtml(user) + "</span>";
+    $("#fb-answer").innerHTML = (drill ? "正确单词：" : "正确写法：") + "<span class='answer'>" + escapeHtml(answerText) + "</span>" + (drill ? fullSentenceHint(s) : "");
+  } else {
+    const d = wordDiff(user, answerText);
+    $("#fb-your").innerHTML = "你的答案：" + (user.trim() ? colorizeWords(d.userWords, d.userMatch) : "<i>（未输入）</i>");
+    $("#fb-answer").innerHTML = (drill ? "正确单词：" : "正确写法：") +
+      (user.trim() ? colorizeWords(d.answerWords, d.answerMatch) : "<span class='answer'>" + escapeHtml(answerText) + "</span>") +
+      '<div class="diff-hint">绿色 = 单词完全一致，红色 = 该词有错误。</div>' + (drill ? fullSentenceHint(s) : "");
+  }
+  renderReviewRemark(s);
+  renderSentenceStats(s);
+  $("#btn-reveal-wrap").classList.add("hidden");
+  $("#answer-input").disabled = false;
+  updateNextButton();
+}
+
+/* 显示当前句的正确率 / 练习次数 / 重复出错 */
+function renderSentenceStats(s) {
+  const total = (s.correctCount || 0) + (s.wrongCount || 0);
+  const acc = total > 0 ? Math.round((s.correctCount / total) * 100) + "%" : "--";
+  const errWords = wordTokens(s.en).filter(w => db.wordErrors[w]);
+  let html = "正确率 " + acc + "｜练习 " + total + " 次";
+  if (errWords.length) {
+    html += "｜<span class='err'>⚠ 重复出错：</span>" + errWords.map(w => w + (db.wordErrors[w].count > 1 ? " ×" + db.wordErrors[w].count : "")).join("、");
+  }
+  $("#fb-stats").innerHTML = html;
+}
+
+function checkAnswer() {
+  const s = currentSentence();
+  if (!s) return;
+  const user = $("#answer-input").value;
+  const drill = isDrill(s);
+  const answerText = answerTextFor(s);
+  const correct = normalizeAnswer(user) !== "" && normalizeAnswer(user) === normalizeAnswer(answerText);
+  const reinforcing = !!(session && session.reinforce);
+
+  if (reinforcing) {
+    // 巩固阶段：答对才进入下一句，且不计数（此时不显示“手误”）
+    lastWrongPreState = null;
+    if (correct) {
+      session.reinforce = false;
+      session.feedback = { user, correct, headText: "巩固完成，答对了 ✔", showTypo: false, revealed: false };
+      renderFeedback(s, user, correct, session.feedback.headText, false);
+    } else {
+      session.feedback = { user, correct, headText: "回答不正确，请再试一次：", showTypo: false, revealed: false };
+      renderFeedback(s, user, correct, session.feedback.headText, false);
+    }
+  } else {
+    const pre = { wrongCount: s.wrongCount, stage: s.stage, nextReviewAt: s.nextReviewAt, lastReviewedAt: s.lastReviewedAt };
+    markReview(s.id, correct);         // 首次作答：正常计数
+    if (correct) {
+      lastWrongPreState = null;
+      session.lastWrongPreState = null;
+      session.feedback = { user, correct, headText: "回答正确！", showTypo: false, revealed: false };
+      renderFeedback(s, user, correct, session.feedback.headText, false);
+    } else {
+      lastWrongPreState = pre;         // 记录判错前状态，供“手误”撤销
+      session.lastWrongPreState = pre;
+      session.reinforce = true;        // 下一题还是这句（巩固），重试不计
+      session.feedback = { user, correct, headText: "回答不正确，稍后再试这句：", showTypo: true, revealed: false };
+      renderFeedback(s, user, correct, session.feedback.headText, true);
+    }
+  }
+  session.draft = user;
+  persistSession(true);
+}
+
+$("#btn-check").addEventListener("click", checkAnswer);
+$("#answer-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if ($("#feedback").classList.contains("show")) {
+      // 已判分 / 已看答案 → 下一题
+      goNext();
+    } else if ($("#answer-input").value.trim() === "") {
+      // 未写内容就回车 → 视为忘记了，直接看答案
+      $("#btn-reveal").click();
+    } else {
+      checkAnswer();
+    }
+  }
+});
+$("#answer-input").addEventListener("input", e => {
+  if (!session || session.feedback) return;
+  session.draft = e.target.value;
+  persistSession();
+});
+
+/* 显示答案：视为答错 */
+$("#btn-reveal").addEventListener("click", () => {
+  const s = currentSentence();
+  if (!s) return;
+  const reinforcing = !!(session && session.reinforce);
+  if (!reinforcing) {
+    markReview(s.id, false);   // 首次看答案：计为答错，并进入巩固重试
+    session.reinforce = true;
+  }
+  $("#answer-input").value = "";
+  const drill = isDrill(s);
+  const answerText = answerTextFor(s);
+  const fb = $("#feedback");
+  fb.classList.remove("hidden", "correct", "wrong");
+  fb.classList.add("show", "wrong");
+  const revealHead = reinforcing ? "还没记住，请再试一次：" : "看过了答案，稍后再试这句：";
+  $("#fb-head").textContent = revealHead;
+  $("#fb-your").innerHTML = "你的答案：<i>（空）</i>";
+  $("#fb-answer").innerHTML = (drill ? "正确单词：" : "正确写法：") + "<span class='answer'>" + escapeHtml(answerText) + "</span>" + (drill ? fullSentenceHint(s) : "");
+  renderReviewRemark(s);
+  renderSentenceStats(s);
+  $("#btn-typo").style.display = "none";   // 看答案=忘了，不是打错，不显示“手误”
+  lastWrongPreState = null;
+  session.lastWrongPreState = null;
+  session.draft = "";
+  session.feedback = { user: "", correct: false, headText: revealHead, showTypo: false, revealed: true };
+  $("#btn-reveal-wrap").classList.add("hidden");
+  updateNextButton();
+  persistSession(true);
+});
+
+function markReview(id, correct, replaceLastActivity = false) {
+  const s = db.sentences.find(x => x.id === id);
+  if (!s) return;
+  ensureActivityHistory(false);
+  const now = Date.now();
+  s.lastReviewedAt = now;
+  if (correct) {
+    s.correctCount = (s.correctCount || 0) + 1;
+    s.stage = (s.stage || 0) + 1;               // 答对：阶段 +1
+    // 按新模型的记忆稳定度 S 安排下次复习（S 小时后的那个时刻）
+    s.nextReviewAt = now + Math.round(stabilityHours(s.stage, errorRate(s)) * HOUR_MS);
+  } else {
+    s.wrongCount = (s.wrongCount || 0) + 1;
+    s.stage = 0;                                // 答错：重置，尽快重现
+    s.nextReviewAt = now;
+  }
+  recordReviewActivity(id, correct, replaceLastActivity);
+  saveDB();
+  refreshStats();
+}
+
+function goNext() {
+  if (!session) return;
+  if (session.reinforce) {
+    // 巩固：不前进，重新显示当前句（再试一次）
+    session.feedback = null;
+    session.draft = "";
+    session.lastWrongPreState = null;
+    lastWrongPreState = null;
+    persistSession(true);
+    showCurrentReview();
+    return;
+  }
+  if (session.idx >= session.list.length - 1) {
+    toast("已经到本轮最后一题，请点击“结束本轮”完成。");
+    persistSession(true);
+    return;
+  }
+  session.idx += 1;
+  session.feedback = null;
+  session.draft = "";
+  session.lastWrongPreState = null;
+  lastWrongPreState = null;
+  persistSession(true);
+  showCurrentReview();
+}
+
+$("#btn-next").addEventListener("click", goNext);
+$("#btn-fini").addEventListener("click", () => { finishReview(); });
+$("#btn-restart").addEventListener("click", () => { startSession(); });
+
+/* 手误：我知道答案，只是打错了 → 撤销这次错误、按答对计、进入下一题 */
+$("#btn-typo").addEventListener("click", () => {
+  const s = currentSentence();
+  if (!s) return;
+  if (!lastWrongPreState && session && session.lastWrongPreState) lastWrongPreState = session.lastWrongPreState;
+  if (lastWrongPreState) {
+    s.wrongCount = lastWrongPreState.wrongCount;
+    s.stage = lastWrongPreState.stage;
+    s.nextReviewAt = lastWrongPreState.nextReviewAt;
+    s.lastReviewedAt = lastWrongPreState.lastReviewedAt;
+    lastWrongPreState = null;
+  }
+  markReview(s.id, true, true);           // 知道答案 → 把刚才的判错改为答对，不重复计数
+  if (session) {
+    session.reinforce = false;            // 不再需要巩固重试
+    session.lastWrongPreState = null;
+    session.feedback = null;
+    session.draft = "";
+  }
+  $("#btn-typo").style.display = "none";
+  toast("手误已计入：不算错，按答对处理");
+  goNext();
+});
+
+function finishReview() {
+  $("#review-active").classList.add("hidden");
+  $("#review-done").classList.remove("hidden");
+  $("#review-done-text").textContent = "本轮复习已结束。去「句子库」查看掌握情况，或再来一轮吧。";
+  session = null;
+  lastWrongPreState = null;
+  clearSavedSession();
+  saveDB();
+  refreshStats();
+}
+
+window.addEventListener("pagehide", () => {
+  if (session && !serverMode) persistSession(true);
+  else if (session && navigator.sendBeacon) {
+    navigator.sendBeacon("api/review-session", JSON.stringify(session));
+  }
+});
+
+function escapeHtml(str) {
+  return (str || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+/* ============================================================
+ * 句子库 / 列表
+ * ============================================================ */
+let editingId = null;
+
+function autoSizeEditField(el) {
+  if (!el) return;
+  el.style.height = "auto";
+  const max = 180;
+  el.style.height = Math.min(Math.max(el.scrollHeight, 44), max) + "px";
+  el.style.overflowY = el.scrollHeight > max ? "auto" : "hidden";
+}
+
+function renderList() {
+  const q = $("#search").value.trim().toLowerCase();
+  const sortBy = $("#sort-select").value || "time";
+  const acc = s => {
+    const t = (s.correctCount || 0) + (s.wrongCount || 0);
+    return t > 0 ? (s.correctCount / t) : null;  // null = 未复习
+  };
+  const items = db.sentences.slice().sort((a, b) => {
+    if (sortBy === "acc") {
+      // 正确率低→高；未复习的排在后面
+      const aa = acc(a), bb = acc(b);
+      if (aa === null && bb === null) return (b.createdAt - a.createdAt);
+      if (aa === null) return 1;
+      if (bb === null) return -1;
+      return aa - bb || (b.createdAt - a.createdAt);
+    }
+    if (sortBy === "wrong") {
+      // 答错次数多→少
+      return ((b.wrongCount || 0) - (a.wrongCount || 0)) || (b.createdAt - a.createdAt);
+    }
+    return b.createdAt - a.createdAt;  // 默认：按添加时间（新→旧）
+  });
+  const filtered = q ? items.filter(s =>
+    (s.en || "").toLowerCase().includes(q) || (s.zh || "").includes(q) || (s.remark || "").toLowerCase().includes(q)) : items;
+
+  const cont = $("#list-container");
+  $("#list-empty").classList.toggle("hidden", filtered.length > 0);
+  cont.innerHTML = "";
+
+  if (filtered.length === 0) {
+    return;
+  }
+
+  filtered.forEach(s => {
+    const item = document.createElement("div");
+    item.className = "sentence-item";
+
+    const meta = document.createElement("div");
+    meta.className = "sent-meta";
+    const total = (s.correctCount || 0) + (s.wrongCount || 0);
+    const acc = total > 0 ? Math.round((s.correctCount / total) * 100) + "%" : "--";
+    meta.innerHTML =
+      '<span>答对 <span class="ok">' + (s.correctCount || 0) + '</span></span>' +
+      '<span>答错 <span class="no">' + (s.wrongCount || 0) + '</span></span>' +
+      '<span>正确率 ' + acc + '</span>' +
+      '<span>' + (formatDate(s.createdAt)) + '</span>';
+    // 显示该句中的“重复出错”单词
+    const errWords = wordTokens(s.en).filter(w => db.wordErrors[w]);
+    if (errWords.length) {
+      meta.innerHTML += '<div class="sent-err-warn">⚠ 重复出错：' +
+        errWords.map(w => w + (db.wordErrors[w].count > 1 ? " ×" + db.wordErrors[w].count : "")).join("、") + '</div>';
+    }
+
+    if (editingId === s.id) {
+      const row = document.createElement("div");
+      row.className = "edit-row";
+      const enIn = document.createElement("textarea");
+      enIn.value = s.en; enIn.rows = 1; enIn.spellcheck = false; enIn.autocomplete = "off";
+      enIn.placeholder = "英文句子";
+      enIn.dataset.inputLanguage = "en"; enIn.lang = "en-US"; enIn.inputMode = "latin";
+      const zhIn = document.createElement("textarea");
+      zhIn.value = s.zh; zhIn.rows = 1; zhIn.spellcheck = false; zhIn.autocomplete = "off";
+      zhIn.placeholder = "中文翻译";
+      zhIn.dataset.inputLanguage = "zh"; zhIn.lang = "zh-CN";
+      const remarkIn = document.createElement("textarea");
+      remarkIn.value = s.remark || ""; remarkIn.rows = 1; remarkIn.spellcheck = false;
+      remarkIn.placeholder = "备注（可选，复习检查答案后显示）";
+      remarkIn.dataset.inputLanguage = "zh"; remarkIn.lang = "zh-CN";
+      const save = document.createElement("button");
+      save.className = "btn btn-primary"; save.textContent = "保存修改";
+      const cancel = document.createElement("button");
+      cancel.className = "btn btn-ghost"; cancel.textContent = "取消";
+      const b = document.createElement("div"); b.className = "btn-row";
+      b.appendChild(save); b.appendChild(cancel);
+      row.appendChild(enIn); row.appendChild(zhIn); row.appendChild(remarkIn); row.appendChild(b);
+      [enIn, zhIn, remarkIn].forEach(field => {
+        field.addEventListener("input", () => autoSizeEditField(field));
+        autoSizeEditField(field);
+      });
+      meta.appendChild(row);
+      const body = document.createElement("div");
+      body.className = "sent-body";
+      body.appendChild(meta);
+      item.appendChild(body);
+      save.addEventListener("click", () => {
+        if (!enIn.value.trim() || !zhIn.value.trim()) { toast("英文和中文都不能为空"); return; }
+        s.en = enIn.value.trim(); s.zh = zhIn.value.trim(); s.remark = remarkIn.value.trim();
+        editingId = null; saveDB(); refreshStats(); renderList(); toast("已修改");
+      });
+      cancel.addEventListener("click", () => { editingId = null; renderList(); });
+    } else {
+      const body = document.createElement("div");
+      body.className = "sent-body";
+      const en = document.createElement("div"); en.className = "sent-en"; en.textContent = s.en;
+      const zh = document.createElement("div"); zh.className = "sent-zh"; zh.textContent = s.zh;
+      body.appendChild(en); body.appendChild(zh);
+      if ((s.remark || "").trim()) {
+        const remark = document.createElement("div"); remark.className = "sent-remark";
+        remark.textContent = "备注：" + s.remark.trim();
+        body.appendChild(remark);
+      }
+      body.appendChild(meta);
+      item.appendChild(body);
+
+      const actions = document.createElement("div");
+      actions.className = "sent-actions";
+      const edit = document.createElement("button");
+      edit.className = "btn btn-soft"; edit.textContent = "编辑";
+      const mark = document.createElement("button");
+      mark.className = "btn btn-ghost"; mark.textContent = "标记重复";
+      const del = document.createElement("button");
+      del.className = "btn btn-danger"; del.textContent = "删除";
+      actions.appendChild(edit); actions.appendChild(mark); actions.appendChild(del);
+      item.appendChild(actions);
+
+      edit.addEventListener("click", () => { editingId = s.id; renderList(); });
+      mark.addEventListener("click", () => openWordMark(s.id));
+      del.addEventListener("click", () => confirmModal("删除这条句子？", "将永久删除：" + s.en, () => {
+        db.sentences = db.sentences.filter(x => x.id !== s.id);
+        ensureActivityHistory(true);
+        saveDB(); refreshStats(); renderList(); toast("已删除");
+      }));
+    }
+    cont.appendChild(item);
+  });
+}
+
+$("#search").addEventListener("input", renderList);
+$("#sort-select").addEventListener("change", renderList);
+
+/* ============================================================
+ * 笔记
+ * ============================================================ */
+let editingNoteId = null;
+
+function renderNotes() {
+  const ny = db.notes || [];
+  const list = $("#notes-list");
+  $("#notes-empty").classList.toggle("hidden", ny.length > 0);
+  list.innerHTML = "";
+  // 新→旧
+  ny.slice().sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)).forEach(n => {
+    const item = document.createElement("div");
+    item.className = "note-item";
+    const head = document.createElement("div");
+    head.className = "note-head";
+    const title = document.createElement("div");
+    title.className = "note-title";
+    title.textContent = n.title || "（无标题）";
+    const dateSpan = document.createElement("div");
+    dateSpan.className = "note-date";
+    dateSpan.textContent = formatDate(n.updatedAt || n.createdAt);
+    head.appendChild(title);
+    head.appendChild(dateSpan);
+
+    const actions = document.createElement("div");
+    actions.className = "note-actions";
+    const edit = document.createElement("button");
+    edit.className = "btn btn-soft"; edit.textContent = "编辑";
+    const del = document.createElement("button");
+    del.className = "btn btn-danger"; del.textContent = "删除";
+    actions.appendChild(edit); actions.appendChild(del);
+    head.appendChild(actions);
+
+    const body = document.createElement("div");
+    body.className = "note-body hidden";
+    body.textContent = n.content || "";
+
+    item.appendChild(head); item.appendChild(body);
+    list.appendChild(item);
+
+    head.addEventListener("click", (e) => {
+      if (e.target.closest(".note-actions")) return;   // 点按钮不展开
+      body.classList.toggle("hidden");
+    });
+    edit.addEventListener("click", () => openNoteForm(n.id));
+    del.addEventListener("click", () => confirmModal("删除这条笔记？", "将永久删除「" + (n.title || "无标题") + "」", () => {
+      db.notes = (db.notes || []).filter(x => x.id !== n.id);
+      saveDB(); renderNotes(); toast("已删除");
+    }));
+  });
+}
+
+function openNoteForm(id) {
+  editingNoteId = id || null;
+  const n = id ? (db.notes || []).find(x => x.id === id) : null;
+  $("#note-title").value = n ? (n.title || "") : "";
+  $("#note-content").value = n ? (n.content || "") : "";
+  document.getElementById("note-form").classList.remove("hidden");
+  $("#note-title").focus();
+}
+
+$("#btn-note-add").addEventListener("click", () => { openNoteForm(null); });
+$("#btn-note-save").addEventListener("click", () => {
+  const title = $("#note-title").value.trim();
+  const content = $("#note-content").value.trim();
+  if (!content && !title) { toast("标题和内容至少填一个"); return; }
+  if (!db.notes) db.notes = [];
+  if (editingNoteId) {
+    const n = db.notes.find(x => x.id === editingNoteId);
+    if (n) { n.title = title; n.content = content; n.updatedAt = Date.now(); }
+  } else {
+    db.notes.push({ id: genId(), title: title, content: content, createdAt: Date.now(), updatedAt: Date.now() });
+  }
+  saveDB();
+  editingNoteId = null;
+  document.getElementById("note-form").classList.add("hidden");
+  $("#note-title").value = ""; $("#note-content").value = "";
+  renderNotes();
+  toast("已保存笔记");
+});
+$("#btn-note-cancel").addEventListener("click", () => {
+  editingNoteId = null;
+  document.getElementById("note-form").classList.add("hidden");
+  $("#note-title").value = ""; $("#note-content").value = "";
+});
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+/* 下次复习时间的友好显示 */
+function fmtNextReview(next) {
+  if (!next || next === 0) return "新句子";
+  const diff = next - Date.now();
+  if (diff <= 0) return "已到期";
+  if (diff < DAY_MS) return "今天稍后";
+  const days = Math.round(diff / DAY_MS);
+  return days + " 天后";
+}
+
+/* 从桌面本地数据文件重新载入 */
+$("#btn-sync").addEventListener("click", async () => {
+  $("#btn-sync").disabled = true;
+  if (serverMode) {
+    await pullFromServer();
+    refreshStats(); refreshReviewSetup(); renderList(); updateConnPill();
+    toast(serverOK ? "已重新载入本地数据 ✔" : "载入失败：请重新打开软件。");
+  } else {
+    db = loadLocal();
+    refreshStats(); refreshReviewSetup(); renderList(); updateConnPill();
+    toast("已从本地缓存重新载入。");
+  }
+  $("#btn-sync").disabled = false;
+});
+
+/* 导出备份 */
+/* 手动备份：下载一份完整数据（句子+笔记+重复出错），并触发一次服务端快照 */
+async function downloadBackup() {
+  try {
+    const payload = Object.assign({}, db, {
+      _backupMeta: { format: "english-learning-assistant", version: 2, exportedAt: Date.now() },
+      _reviewSession: session || null,
+    });
+    const d = new Date(); const p = n => String(n).padStart(2, "0");
+    const filename = "english-backup_" + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + "_" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + ".json";
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const file = new File([blob], filename, { type: "application/json" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({ title: "英语学习助手备份", files: [file] });
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    toast("已手动备份 ✔（含学习数据和复习进度）");
+  } catch (e) { toast("备份文件生成失败：" + e.message); }
+  if (serverMode) saveDB();  // 在线时同时写一份服务端快照到 backups\
+}
+$("#btn-export").addEventListener("click", downloadBackup);
+
+/* 从自动备份恢复 */
+async function openRestore() {
+  const modal = $("#restore-modal");
+  const list = $("#restore-list");
+  list.innerHTML = '<p style="color:var(--muted);">正在加载备份列表…</p>';
+  modal.classList.add("show");
+  let backups = [];
+  if (serverMode) {
+    try {
+      const r = await fetch("api/backups");
+      const d = await r.json();
+      backups = (d.backups || []).slice(0, 20);
+    } catch (e) { }
+  } else {
+    backups = readLocalBackups().map((item, index) => ({
+      name: "local-" + index,
+      time: item.time,
+      sentences: (item.data.sentences || []).length,
+      notes: (item.data.notes || []).length,
+      data: item.data,
+    }));
+  }
+  if (!backups.length) { list.innerHTML = '<p style="color:var(--muted);">暂无自动备份。</p>'; return; }
+  list.innerHTML = "";
+  backups.forEach(b => {
+    const row = document.createElement("div");
+    row.className = "restore-item";
+    const info = document.createElement("div");
+    info.className = "restore-info";
+    const t = b.time ? new Date(b.time) : null;
+    info.textContent = (t ? t.toLocaleString() : b.name) + "　｜句子 " + b.sentences + " 条｜笔记 " + b.notes + " 条";
+    const btn = document.createElement("button");
+    btn.className = "btn btn-ghost"; btn.textContent = "恢复";
+    btn.addEventListener("click", () => {
+      confirmModal("从这次备份恢复？", "将用该备份覆盖当前数据（会先自动备份当前数据）。确定继续？", async () => {
+        if (!serverMode && b.data) {
+          await applyImportedBackup(b.data);
+          $("#restore-modal").classList.remove("show");
+          return;
+        }
+        try {
+          const rr = await fetch("api/restore", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: b.name }) });
+          const j = await rr.json();
+          if (j.ok) {
+            await pullFromServer();
+            refreshStats(); refreshReviewSetup(); renderList(); renderNotes();
+            toast("已恢复（句子 " + j.sentences + " 条、笔记 " + j.notes + " 条）");
+          } else toast("恢复失败：" + (j.error || ""));
+        } catch (e) { toast("恢复失败：" + e.message); }
+      });
+    });
+    row.appendChild(info); row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+$("#btn-restore").addEventListener("click", openRestore);
+$("#restore-close").addEventListener("click", () => $("#restore-modal").classList.remove("show"));
+$("#restore-modal").addEventListener("click", e => { if (e.target === e.currentTarget) $("#restore-modal").classList.remove("show"); });
+
+/* 导入备份 */
+$("#btn-import").addEventListener("click", () => $("#import-file").click());
+$("#import-file").addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      if (!data.sentences || !Array.isArray(data.sentences)) throw new Error("格式错误");
+      const nNotes = Array.isArray(data.notes) ? data.notes.length : 0;
+      confirmModal("同步导入备份？", "将用备份中的句子 " + data.sentences.length + " 条、笔记 " + nNotes + " 条覆盖当前数据；导入前会自动备份当前数据。", async () => {
+        await applyImportedBackup(data);
+      });
+    } catch (err) {
+      toast("导入失败：文件不是有效的备份。");
+    }
+    e.target.value = "";
+  };
+  reader.readAsText(file);
+});
+
+function normalizeImportedBackup(data) {
+  const sentences = data.sentences.map(s => ({
+    id: typeof s.id === "string" && s.id ? s.id : genId(),
+    en: typeof s.en === "string" ? s.en : "",
+    zh: typeof s.zh === "string" ? s.zh : "",
+    remark: typeof s.remark === "string" ? s.remark : "",
+    createdAt: Number(s.createdAt) || Date.now(),
+    correctCount: Math.max(0, Number(s.correctCount) || 0),
+    wrongCount: Math.max(0, Number(s.wrongCount) || 0),
+    lastReviewedAt: s.lastReviewedAt ? Number(s.lastReviewedAt) : null,
+    focusWords: Array.isArray(s.focusWords) ? s.focusWords.map(String).filter(Boolean) : [],
+    stage: Math.max(0, Number(s.stage) || 0),
+    nextReviewAt: Number(s.nextReviewAt) || 0,
+  }));
+  const notes = (Array.isArray(data.notes) ? data.notes : []).map(n => ({
+    id: typeof n.id === "string" && n.id ? n.id : genId(),
+    title: typeof n.title === "string" ? n.title : "",
+    content: typeof n.content === "string" ? n.content : "",
+    createdAt: Number(n.createdAt) || Date.now(),
+    updatedAt: Number(n.updatedAt) || Number(n.createdAt) || Date.now(),
+  }));
+  return {
+    version: Number(data.version) || 1,
+    sentences,
+    wordErrors: data.wordErrors && typeof data.wordErrors === "object" ? data.wordErrors : {},
+    notes,
+    activity: data.activity && typeof data.activity === "object" ? data.activity : { reviewEvents: [], reviewBaseline: null },
+  };
+}
+
+async function applyImportedBackup(data) {
+  await saveDB();
+  if (!serverMode) snapshotLocalBackup(db);
+  db = normalizeImportedBackup(data);
+  ensureActivityHistory(true);
+  const validIds = new Set(db.sentences.map(s => s.id));
+  let importedSession = data._reviewSession && Array.isArray(data._reviewSession.list) ? data._reviewSession : null;
+  if (importedSession) {
+    importedSession.list = importedSession.list.filter(id => validIds.has(id));
+    if (!importedSession.list.length) importedSession = null;
+  }
+  session = importedSession;
+  lastWrongPreState = importedSession && importedSession.lastWrongPreState || null;
+  if (session) {
+    session.idx = Math.min(Math.max(0, Number(session.idx) || 0), session.list.length - 1);
+    reviewMode = ["curve", "order", "random"].includes(session.mode) ? session.mode : "curve";
+    session.mode = reviewMode;
+    $$(".mode-opt").forEach(x => x.classList.toggle("selected", x.dataset.mode === reviewMode));
+  }
+  if (session) await persistSession(true); else await clearSavedSession();
+  await saveDB();
+  refreshStats(); refreshReviewSetup(); renderList(); renderNotes();
+  toast("同步导入完成 ✔");
+}
+
+/* 清空全部 */
+$("#btn-clear").addEventListener("click", () => {
+  confirmModal("清空全部句子？", "此操作不可撤销，请先导出备份。", () => {
+    db.sentences = [];
+    db.activity = { reviewEvents: [], reviewBaseline: null };
+    ensureActivityHistory(true);
+    saveDB(); refreshStats(); renderList(); toast("已清空");
+  });
+});
+
+/* ============================================================
+ * 通用确认弹窗
+ * ============================================================ */
+let modalCb = null;
+function confirmModal(title, text, onOk) {
+  $("#modal-title").textContent = title;
+  $("#modal-text").textContent = text;
+  modalCb = onOk;
+  $("#modal-overlay").classList.add("show");
+}
+$("#modal-ok").addEventListener("click", () => {
+  $("#modal-overlay").classList.remove("show");
+  if (modalCb) { const cb = modalCb; modalCb = null; cb(); }
+});
+$("#modal-cancel").addEventListener("click", () => { $("#modal-overlay").classList.remove("show"); modalCb = null; });
+$("#modal-overlay").addEventListener("click", e => { if (e.target === e.currentTarget) { $("#modal-overlay").classList.remove("show"); modalCb = null; } });
+
+/* ============================================================
+ * 初始化
+ * ============================================================ */
+(async function init() {
+  await detectServerMode();       // 桌面版连接内置的本地数据服务
+  if (serverMode) {
+    await pullFromServer();       // 从用户数据目录载入
+  } else {
+    db = loadLocal();             // 本地模式：从浏览器存储加载
+  }
+  ensureActivityHistory(true);
+  const saved = await loadReviewSession();
+  if (saved && Array.isArray(saved.list)) {
+    const currentId = saved.list[Math.max(0, Number(saved.idx) || 0)];
+    const validIds = new Set(db.sentences.map(s => s.id));
+    saved.list = saved.list.filter(id => validIds.has(id));
+    if (saved.list.length) {
+      const restoredIndex = saved.list.indexOf(currentId);
+      saved.idx = restoredIndex >= 0 ? restoredIndex : Math.min(Math.max(0, Number(saved.idx) || 0), saved.list.length - 1);
+      saved.mode = ["curve", "order", "random"].includes(saved.mode) ? saved.mode : "curve";
+      saved.draft = typeof saved.draft === "string" ? saved.draft : "";
+      session = saved;
+      reviewMode = saved.mode;
+      lastWrongPreState = saved.lastWrongPreState || null;
+      $$(".mode-opt").forEach(x => x.classList.toggle("selected", x.dataset.mode === reviewMode));
+    } else {
+      clearSavedSession();
+    }
+  }
+  updateConnPill();
+  updateOfflineBanner();
+  refreshStats();
+  refreshReviewSetup();
+  if (currentTab === "list") renderList();
+  if (!MOBILE_APP) inputEn.focus();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const guideSeen = localStorage.getItem("englishLearnerInstallGuide.v1") === "1";
+  if (!standalone && !guideSeen) $("#install-guide").classList.remove("hidden");
+})();
+
+$("#install-guide-close").addEventListener("click", () => {
+  localStorage.setItem("englishLearnerInstallGuide.v1", "1");
+  $("#install-guide").classList.add("hidden");
+});
+
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => navigator.serviceWorker.register("service-worker.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "english-learning-mobile-2.5.0";
+const CACHE_NAME = "english-learning-mobile-2.5.1";
 const APP_FILES = ["./", "./index.html", "./manifest.webmanifest", "./logo.jpg", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", event => {
